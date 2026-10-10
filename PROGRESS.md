@@ -53,7 +53,7 @@ Reminder aksi (belum dikerjakan):
 - Ingatkan untuk membuatkan docs mengenai fitur-fitur yang ada di project ini
   (penjelasan per fitur: cara kerja, cara pakai, lokasi kode — dari isi PROGRESS,
   AUDIT, dan README yang sudah ada).
-- Ingatkan untuk push ke repo baru (repository GitHub terpisah untuk project ini).
+- ~~Ingatkan untuk push ke repo baru~~ — SELESAI: https://github.com/rizkytm/laravel-13-vue3-lab (public)
 - Ingatkan untuk membuatkan GitHub Actions (CI: jalankan `php artisan test` +
   `npm test` di setiap push).
 - Ingatkan untuk gunakan Tailwind CSS untuk styling frontend (ganti style
