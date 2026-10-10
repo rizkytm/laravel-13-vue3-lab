@@ -26,12 +26,16 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | M6 — Digging Deep (broadcast, cache, storage, i18n) | ✅ | `feat(M6)` | 77 test: StockUpdated broadcast (after-commit!), cache list + invalidation, upload gambar disk privat, SetLocale ?lang= |
 | M7 — Security, Error Handling, Logging | ✅ | `feat(M7)` | 90 test: signed URL invoice, encrypted phone, custom 404/403 JSON, JSON log + request_id context, AUDIT.md |
 | M8 — Testing polish & dokumentasi | ✅ | `feat(M8)` | 91 test: SeederTest, README portofolio |
-| F1 — Vue 3 setup + Composition API basics | ⬜ | | setelah M4 |
+| F1 — Vue 3 setup + Composition API basics | ✅ | `feat(F1)` | 11 test Vitest: router+guard, api wrapper (Bearer), ref/computed/onMounted, props/emit, search filter, navigasi detail |
 | F2 — Pinia + composables | ⬜ | | |
 | F3 — Integrasi full-stack (Sanctum SPA) | ⬜ | | |
 | F4 — TypeScript migration | ⬜ | | |
 
-Test terakhir: **91 passed** (M8 selesai, commit `feat(M8)`). Backend M1-M8 lengkap.
+Test terakhir: **91 passed (PHP) + 11 passed (Vitest)** — F1 selesai, commit `feat(F1)`.
+Backend M1-M8 lengkap; fase Vue mulai F1.
+
+Run test frontend: `cd frontend && npm test`. Dev: 2 server (`php artisan serve` +
+`npm run dev` di `frontend/`, buka http://localhost:5173).
 
 ## Pertanyaan tertunda
 
@@ -46,6 +50,9 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 - Ingatkan untuk membuatkan docs mengenai fitur-fitur yang ada di project ini
   (penjelasan per fitur: cara kerja, cara pakai, lokasi kode — dari isi PROGRESS,
   AUDIT, dan README yang sudah ada).
+- Ingatkan untuk push ke repo baru (repository GitHub terpisah untuk project ini).
+- Ingatkan untuk membuatkan GitHub Actions (CI: jalankan `php artisan test` +
+  `npm test` di setiap push).
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
