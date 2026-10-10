@@ -9,6 +9,7 @@ const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const error = ref('')
 
 async function submit(): Promise<void> {
@@ -56,13 +57,24 @@ async function submit(): Promise<void> {
       </label>
       <label class="block text-sm">
         <span class="mb-1 block text-ink-muted">Password</span>
-        <input
-          v-model="password"
-          type="password"
-          required
-          autocomplete="current-password"
-          class="w-full rounded-md border border-line bg-raised px-3 py-2 text-base text-ink focus:border-accent"
-        >
+        <span class="relative block">
+          <input
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            required
+            autocomplete="current-password"
+            class="w-full rounded-md border border-line bg-raised px-3 py-2 pr-16 text-base text-ink focus:border-accent"
+          >
+          <button
+            type="button"
+            data-testid="toggle-password"
+            :aria-label="showPassword ? 'Sembunyikan password' : 'Lihat password'"
+            class="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-2 py-1 text-xs text-ink-muted hover:text-accent"
+            @click="showPassword = !showPassword"
+          >
+            {{ showPassword ? 'Sembunyikan' : 'Lihat' }}
+          </button>
+        </span>
       </label>
       <button
         type="submit"

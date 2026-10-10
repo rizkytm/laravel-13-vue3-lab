@@ -63,6 +63,9 @@ Reminder aksi (belum dikerjakan):
 - ~~Ingatkan untuk gunakan Tailwind CSS untuk styling frontend~~ — SELESAI:
   Tailwind v4 (Vite plugin), token di `src/style.css` (`@theme` OKLCH: warm
   neutrals + accent terracotta), system font + mono buat ID, semua view restyle.
+- Ingatkan tentang **fitur register** — saat ini BELUM ADA (user cuma dari
+  seeder). Kalau diperlukan: endpoint + form daftar + policy, atau bilang
+  register emang di luar scope lab.
 - Ingatkan untuk mengecek apakah bisa implement Laravel Filament untuk
   admin dashboardnya (resource Product/Order, review dulu apakah Filament 4
   kompatibel Laravel 13 + sepadan vs bikin sendiri).
