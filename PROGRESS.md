@@ -25,13 +25,13 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | M5 — Events, Queues, Notifications, Mail | ✅ | `feat(M5)` | 68 test: OrderPlaced event, ProcessPayment job (idempotent, backoff, failed()), notification mail+database, scheduler orders:cleanup |
 | M6 — Digging Deep (broadcast, cache, storage, i18n) | ✅ | `feat(M6)` | 77 test: StockUpdated broadcast (after-commit!), cache list + invalidation, upload gambar disk privat, SetLocale ?lang= |
 | M7 — Security, Error Handling, Logging | ✅ | `feat(M7)` | 90 test: signed URL invoice, encrypted phone, custom 404/403 JSON, JSON log + request_id context, AUDIT.md |
-| M8 — Testing polish & dokumentasi | ⬜ | | lanjutan berikutnya |
+| M8 — Testing polish & dokumentasi | ✅ | `feat(M8)` | 91 test: SeederTest, README portofolio |
 | F1 — Vue 3 setup + Composition API basics | ⬜ | | setelah M4 |
 | F2 — Pinia + composables | ⬜ | | |
 | F3 — Integrasi full-stack (Sanctum SPA) | ⬜ | | |
 | F4 — TypeScript migration | ⬜ | | |
 
-Test terakhir: **90 passed** (M7 selesai, commit `feat(M7)`).
+Test terakhir: **91 passed** (M8 selesai, commit `feat(M8)`). Backend M1-M8 lengkap.
 
 ## Pertanyaan tertunda
 
@@ -48,19 +48,41 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 
 - Review semua test: `RefreshDatabase` konsisten, 1 test pakai seed
 - Pastikan tidak ada test rapuh (dependensi urutan/waktu)
-- Tulis `README.md` project: setup, struktur, fitur per milestone → portofolio
-- 1 LinkedIn post ringkas (kaitan bootcamp poin 7)
-- Setelah M8: **jawab pertanyaan tertunda di atas**, lalu lanjut fase F1 (Vue 3)
+- Tulis `README.md` project: setup, struktur, fitur per milestone → portofolio ✅
+- ~~1 LinkedIn post ringkas~~ — dibatalkan (tidak diperlukan)
+- Setelah M8: lanjut fase F1 (Vue 3). **Pertanyaan tertunda dijawab setelah seluruh
+  implementasi selesai (M8 + fase F)** — jangan dijawab dulu di sini.
 
 ## Perintah penting
 
 ```bash
-php artisan serve            # cek browser: http://127.0.0.1:8000
-php artisan test             # full suite — harus hijau sebelum lanjut
-php artisan migrate:fresh --seed   # reset DB dev (hati-hati: data ilang)
+# Server & test
+php artisan serve                    # cek browser: http://127.0.0.1:8000
+php artisan test                     # full suite — harus hijau sebelum lanjut
+
+# Database
+php artisan migrate                  # jalankan migrasi baru saja
+php artisan migrate:fresh --seed     # reset DB dev (hati-hati: data ilang)
+
+# Queue & scheduler (M5) — terminal terpisah saat dev
+php artisan queue:work               # proses ProcessPayment + notification
+php artisan queue:failed             # lihat job yang gagal total
+php artisan queue:retry all          # retry semua job gagal
+php artisan schedule:work            # aktifkan scheduler harian (orders:cleanup)
+php artisan orders:cleanup --hours=24  # jalankan cleanup manual
+
+# Debug & inspect
+php artisan tinker                   # REPL interaktif
+php artisan tinker --execute='dd(App\Models\Product::count())'   # one-liner
+tail -f storage/logs/laravel.log     # log JSON (channel=json, ada request_id)
+php artisan route:list               # semua route + middleware
+
+# Git
+git log --oneline                    # riwayat milestone
 ```
 
-URL: `/` checkout (M1), `/products` (M2), `/orders` (M2), login (M3)
+URL: `/` checkout (M1), `/products` (M2), `/orders` login dulu (M3),
+`/api/v1/*` (M4, butuh token), `?lang=id` (M6), link invoice signed (M7).
 
 ## Aturan lanjut sesi
 

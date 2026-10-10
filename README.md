@@ -1,58 +1,88 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel 13 Lab — E-commerce Learning Project
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A hands-on lab to learn modern Laravel 13 end-to-end: from dependency
+container up to queued payments, structured logging and security hardening.
+Small e-commerce domain — products, orders, checkout — used as the vehicle,
+every feature tested (90+ Pest tests).
 
-## About Laravel
+**Learning model:** each milestone = one framework concern, implemented for
+real, verified by tests, checked in the browser. Journey documented in
+[`PROGRESS.md`](PROGRESS.md), security posture in [`AUDIT.md`](AUDIT.md).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features by milestone
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| # | Milestone | What's inside |
+|---|---|---|
+| M1 | Architecture | Container binding (interface → singleton), method injection, Collections |
+| M2 | Database & Eloquent | Relations, `casts()` method, model events, scopes, JSON columns, race-safe stock via `lockForUpdate`, factories |
+| M3 | Auth & Authorization | Session auth (regenerate/invalidate), FormRequest, custom validation rule, `OrderPolicy`, rate limiting, Sanctum tokens |
+| M4 | API Layer | Versioned `/api/v1`, API Resources, offset + cursor pagination, transactional checkout with rollback, payment driver via config |
+| M5 | Events & Queues | `OrderPlaced` event discovery, queued `ProcessPayment` (retry/backoff/idempotency/`failed()`), queued multi-channel notifications, scheduler |
+| M6 | Deep features | Broadcasting (log driver), cache + invalidation, private file storage upload, localization (`?lang=id`) |
+| M7 | Security & Logging | Signed URLs, encrypted casts, consistent JSON errors (no internal leaks), JSON log channel + `request_id` correlation |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Tech stack
 
-## Learning Laravel
+- PHP 8.5 · Laravel 13 · Pest · SQLite
+- Queue: database driver · Mail: log driver · Broadcast: log driver
+- Sanctum personal access tokens for the API
+- No Redis/Docker needed — plain `composer install` runs everything
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Getting started
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env && php artisan key:generate
+touch database/database.sqlite
+php artisan migrate --seed
+php artisan test          # 90+ tests, all green
+php artisan serve         # http://127.0.0.1:8000
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Useful extras:
 
-## Contributing
+```bash
+php artisan queue:work            # process payments + notifications
+php artisan orders:cleanup        # cancel stale pending orders (daily 03:00)
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Demo login (web): `test@example.com` / `password`.
 
-## Code of Conduct
+API quick try:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+curl -X POST http://127.0.0.1:8000/api/token \
+  -H "Accept: application/json" -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password"}'
+# → {"token":"1|..."} → use as Authorization: Bearer on /api/v1/*
+```
 
-## Security Vulnerabilities
+## Structure
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+app/
+├── Console/Commands/   # orders:cleanup (scheduled daily)
+├── Events/             # OrderPlaced, StockUpdated (broadcast)
+├── Http/
+│   ├── Controllers/    # Web + Api/
+│   ├── Middleware/     # SetLocale, AssignRequestId, EnsureCartNotEmpty
+│   ├── Requests/       # FormRequest validation layer
+│   ├── Resources/      # API JSON contracts
+│   └── Rules/          # StockAvailable custom rule
+├── Jobs/               # ProcessPayment (queued, idempotent)
+├── Listeners/          # SendOrderConfirmation (auto-discovered)
+├── Notifications/      # OrderConfirmation (mail + database)
+├── Policies/           # OrderPolicy ownership rules
+└── Services/Payment/   # PaymentGateway interface + fake/http drivers
+tests/{Feature,Unit}/   # 90+ Pest tests
+```
 
-## License
+## Frontend (phase F — in progress)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+A Vue 3 SPA (`frontend/`, not yet started) will consume this API:
+Composition API, Pinia, Vue Router, Vitest — then a TypeScript migration.
+
+## Docs
+
+- [`PROGRESS.md`](PROGRESS.md) — milestone log, session resume guide, open questions
+- [`AUDIT.md`](AUDIT.md) — code-review checklist mapped against this codebase
