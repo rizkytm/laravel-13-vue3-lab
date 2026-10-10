@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import type { CartItem, Product } from '../types'
 
 /**
  * Cart store — gaya "setup store" (Composition API di dalam store):
@@ -10,14 +11,14 @@ import { computed, ref, watch } from 'vue'
 export const useCartStore = defineStore('cart', () => {
   // --- State ---
   // localStorage = persistence eksternal → treat sebagai input tak terpercaya
-  const items = ref(loadSaved())
+  const items = ref<CartItem[]>(loadSaved())
 
   // --- Getters (computed: cache by dependency) ---
   const count = computed(() => items.value.reduce((n, i) => n + i.quantity, 0))
   const total = computed(() => items.value.reduce((n, i) => n + i.price * i.quantity, 0))
 
   // --- Actions ---
-  function add(product, quantity = 1) {
+  function add(product: Product, quantity = 1): void {
     const existing = items.value.find((i) => i.product_id === product.id)
     if (existing) {
       existing.quantity += quantity
@@ -31,7 +32,7 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
-  function setQuantity(productId, quantity) {
+  function setQuantity(productId: number, quantity: number): void {
     if (quantity < 1) {
       remove(productId)
       return
@@ -40,11 +41,11 @@ export const useCartStore = defineStore('cart', () => {
     if (item) item.quantity = quantity
   }
 
-  function remove(productId) {
+  function remove(productId: number): void {
     items.value = items.value.filter((i) => i.product_id !== productId)
   }
 
-  function clear() {
+  function clear(): void {
     items.value = []
   }
 
@@ -58,9 +59,10 @@ export const useCartStore = defineStore('cart', () => {
   return { items, count, total, add, setQuantity, remove, clear }
 })
 
-function loadSaved() {
+function loadSaved(): CartItem[] {
   try {
-    return JSON.parse(localStorage.getItem('lab_cart') || '[]')
+    const parsed: unknown = JSON.parse(localStorage.getItem('lab_cart') || '[]')
+    return Array.isArray(parsed) ? (parsed as CartItem[]) : []
   } catch {
     return [] // JSON korup → reset, jangan crash
   }

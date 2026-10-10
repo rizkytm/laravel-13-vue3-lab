@@ -77,10 +77,12 @@ app/
 tests/{Feature,Unit}/   # 90+ Pest tests
 ```
 
-## Frontend (phase F — in progress)
+## Frontend (phases F1–F4 — complete)
 
-A Vue 3 SPA (`frontend/`, not yet started) will consume this API:
-Composition API, Pinia, Vue Router, Vitest — then a TypeScript migration.
+A Vue 3 SPA (`frontend/`) consuming this API — Composition API + `<script
+setup>`, Pinia (cart/auth stores), Vue Router with async guard, Sanctum SPA
+cookie auth, and a full TypeScript migration (`vue-tsc --noEmit` clean).
+Tests: Vitest + Vue Test Utils (35 tests, jsdom).
 
 ## Docs
 

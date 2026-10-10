@@ -1,12 +1,13 @@
-<script setup>
+<script setup lang="ts">
 import { inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { useCartStore } from './stores/cart'
+import type { AppConfig } from './types'
 
 const router = useRouter()
 // inject: nilai dari app.provide('appConfig') — tanpa prop drilling
-const config = inject('appConfig')
+const config = inject<AppConfig>('appConfig')!
 
 const auth = useAuthStore() // state global: siapa yang login
 const cart = useCartStore() // state global: isi keranjang
@@ -15,7 +16,7 @@ const cart = useCartStore() // state global: isi keranjang
 // (guard route tetap jadi penjaga utama)
 onMounted(() => auth.fetchUser())
 
-async function logout() {
+async function logout(): Promise<void> {
   await auth.logout()
   router.push({ name: 'login' })
 }

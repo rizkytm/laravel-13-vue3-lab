@@ -1,6 +1,6 @@
 # Debrief — Pertanyaan & Jawaban per Milestone
 
-Kumpulan debrief Laravel 13 Lab (M1–F3). Pertanyaan diajukan setiap milestone
+Kumpulan debrief Laravel 13 Lab (M1–F4). Pertanyaan diajukan setiap milestone
 selesai; jawaban menyertai. Dipakai sebagai bahan bacaan ulang + persiapan
 interview (kaitan roadmap poin 3: System Design).
 
@@ -294,3 +294,36 @@ Harga dari client = **tawaran, bukan fakta**. Kalau cart kirim `price: 1` dan
 backend percaya = diskon 99% otomatis. Backend (M4) hitung ulang total dari DB
 di dalam transaksi — client hanya bilang "mau beli apa dan berapa". Prinsip:
 validasi & kebenaran selalu di server.
+
+---
+
+## F4 — TypeScript migration
+
+**1. Kenapa TypeScript harus turun ke 5.9?**
+`vue-tsc` meng-import **API internal** compiler (`typescript/lib/tsc`).
+TypeScript 7 (compiler native baru) menghapus subpath export itu →
+`ERR_PACKAGE_PATH_NOT_EXPORTED`. Pelajaran: type-checker sendiri adalah
+*library* bagi tool lain — version lockstep `typescript` ↔ `vue-tsc` wajib
+dijaga.
+
+**2. Apa yang dijaga `useApi<T>` / `api.get<T>` generik?**
+Kontrak **bentuk response**. Typo field (`next_crusor`) atau salah baca shape
+→ error **compile di titik pemakaian**, bukan `undefined` di runtime. Test mock
+tidak menangkap itu (mock bebas bentuk) — inilah nilai TS: menangkap
+ketidakkonsistenan yang gak diuji test.
+
+**3. Type-based props/emits vs runtime props?**
+`defineProps<{ product: Product }>()` validasinya **compile-time saja** — di
+production build gak ada runtime check (beda object-props yang validate saat
+runtime). Trade-off: hemat bundle vs safety. Vue 3.3+ memilih type-based;
+devtools tetap menampilkan tipe props.
+
+**4. Kenapa `catch (e)` butuh `as ApiError`?**
+Di TS strict, `e` di catch bertipe `unknown` (bisa apa pun). Cast dibatasi di
+**boundary**: `api.ts` tempat error dilempar dengan shape tertentu → asumsi
+"ini ApiError" paling aman di sana, bukan di 10 komponen.
+
+**5. Kenapa test tetap `.js`?**
+Vitest menjalankan JS apa adanya; konversi 35 file test = noise tanpa nilai
+tambahan. Typecheck hanya `include: src` — konversi source dulu, test menyusul
+kalau perlu.

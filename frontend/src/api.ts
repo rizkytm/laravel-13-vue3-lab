@@ -1,22 +1,29 @@
+import type { ApiError, Paginated } from './types'
+
 // HTTP wrapper ke Laravel API — SATU tempat untuk base URL, header,
 // token, dan interpretasi error. Component/pure function tidak perlu
-// tahu detail fetch.
+// tahu detail fetch. (F4: generik T = bentuk response yang diharapkan)
 
 const TOKEN_KEY = 'lab_token'
 
-export function getToken() {
+export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY)
 }
 
-export function setToken(token) {
+export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token)
 }
 
-export function clearToken() {
+export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
 }
 
-export async function request(url, { method = 'GET', body } = {}) {
+interface RequestOptions {
+  method?: string
+  body?: unknown
+}
+
+export async function request<T = unknown>(url: string, { method = 'GET', body }: RequestOptions = {}): Promise<T> {
   const token = getToken()
 
   const res = await fetch(url, {
@@ -33,23 +40,28 @@ export async function request(url, { method = 'GET', body } = {}) {
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  const json = await res.json().catch(() => null)
+  const json: unknown = await res.json().catch(() => null)
 
   if (!res.ok) {
     // Error shape mengikuti kontrak Laravel: {message, errors}
-    const error = new Error(json?.message || `HTTP ${res.status}`)
+    const message = typeof json === 'object' && json !== null && 'message' in json
+      ? String((json as { message: unknown }).message)
+      : `HTTP ${res.status}`
+    const error = new Error(message) as ApiError
     error.status = res.status
-    error.errors = json?.errors || {}
+    error.errors = (json as { errors?: Record<string, string[]> } | null)?.errors ?? {}
     throw error
   }
 
-  return json
+  return json as T
 }
 
 // Helper untuk endpoint versioned (/api/v1/*)
 export const api = {
-  get: (path) => request(`/api/v1${path}`),
-  post: (path, body) => request(`/api/v1${path}`, { method: 'POST', body }),
+  get: <T = unknown>(path: string) => request<Paginated<T>>(`/api/v1${path}`),
+  // Bentuk spesifik (bukan paginator) — dipakai auth store
+  raw: <T = unknown>(path: string) => request<T>(`/api/v1${path}`),
+  post: <T = unknown>(path: string, body?: unknown) => request<T>(`/api/v1${path}`, { method: 'POST', body }),
 }
 
 // --- Sanctum SPA flow (cookie session) ---
@@ -57,16 +69,16 @@ export const api = {
 // 2. POST /login dengan header X-XSRF-TOKEN (nilai cookie, di-decode)
 // 3. Request berikutnya cukup credentials:'include' — auth via session
 
-export function xsrfToken() {
+export function xsrfToken(): string {
   const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/)
   return match ? decodeURIComponent(match[1]) : ''
 }
 
-async function csrf() {
+async function csrf(): Promise<void> {
   await fetch('/sanctum/csrf-cookie', { credentials: 'include' })
 }
 
-function authHeaders() {
+function authHeaders(): Record<string, string> {
   return {
     Accept: 'application/json',
     'Content-Type': 'application/json',
@@ -74,25 +86,31 @@ function authHeaders() {
   }
 }
 
-// SPA login → endpoint WEB (session), bukan /api/token
-export async function spaLogin(email, password) {
-  await csrf()
-  const res = await fetch('/login', {
-    method: 'POST',
-    credentials: 'include',
-    headers: authHeaders(),
-    body: JSON.stringify({ email, password }),
-  })
-  const json = await res.json().catch(() => null)
+async function parseOrThrow(res: Response): Promise<unknown> {
+  const json: unknown = await res.json().catch(() => null)
   if (!res.ok) {
-    const error = new Error(json?.message || 'Login gagal.')
+    const message = typeof json === 'object' && json !== null && 'message' in json
+      ? String((json as { message: unknown }).message)
+      : 'Login gagal.'
+    const error = new Error(message) as ApiError
     error.status = res.status
     throw error
   }
   return json
 }
 
-export async function spaLogout() {
+// SPA login → endpoint WEB (session), bukan /api/token
+export async function spaLogin(email: string, password: string): Promise<void> {
+  await csrf()
+  await parseOrThrow(await fetch('/login', {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeaders(),
+    body: JSON.stringify({ email, password }),
+  }))
+}
+
+export async function spaLogout(): Promise<void> {
   await csrf()
   await fetch('/logout', {
     method: 'POST',
@@ -102,11 +120,10 @@ export async function spaLogout() {
 }
 
 // Mode lama (token perangkat/mobile) — tetap tersedia, gak dipakai SPA
-export async function login(email, password) {
-  const data = await request('/api/token', {
+export async function login(email: string, password: string): Promise<void> {
+  const data = await request<{ token: string }>('/api/token', {
     method: 'POST',
     body: { email, password },
   })
   setToken(data.token)
-  return data
 }

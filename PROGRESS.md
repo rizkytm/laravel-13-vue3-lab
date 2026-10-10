@@ -29,12 +29,11 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | F1 — Vue 3 setup + Composition API basics | ✅ | `feat(F1)` | 11 test Vitest: router+guard, api wrapper (Bearer), ref/computed/onMounted, props/emit, search filter, navigasi detail |
 | F2 — Pinia + composables | ✅ | `feat(F2)` | 25 test Vitest: cart store (add/qty/getter, watch persist localStorage, corrupted safe), useProducts/useApi composables, CartView |
 | F3 — Integrasi full-stack (Sanctum SPA) | ✅ | `feat(F3)` | 35 test Vitest + 94 PHP: cookie session SPA (csrf-cookie/XSRF), auth store, async guard, checkout cart→API, order history |
-| F4 — TypeScript migration | ⬜ | | fase terakhir |
+| F4 — TypeScript migration | ✅ | `feat(F4)` | Semua src .ts/.vue lang=ts: types.ts kontrak API, generik useApi<T>, type-based props/emits; vue-tsc --noEmit bersih |
 
-Test terakhir: **94 passed (PHP) + 35 passed (Vitest)** — F3 selesai, commit `feat(F3)`.
-Backend M1-M8 lengkap; fase Vue: F1-F3 selesai, tinggal F4 (TypeScript).
-Dev butuh 2 server + `queue:work` untuk cek alur paid; `.env` punya
-`SANCTUM_STATEFUL_DOMAINS` — restart `php artisan serve` kalau .env berubah.
+Test terakhir: **94 passed (PHP) + 35 passed (Vitest) + `vue-tsc --noEmit` bersih**.
+**Seluruh implementasi selesai (M1-M8 + F1-F4)** — commit `feat(F4)`.
+Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).
 
 Run test frontend: `cd frontend && npm test`. Dev: 2 server (`php artisan serve` +
 `npm run dev` di `frontend/`, buka http://localhost:5173).

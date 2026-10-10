@@ -1,40 +1,42 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import { useCartStore } from '../stores/cart'
+import type { Product } from '../types'
 
 // Dynamic route: /products/:slug → params.slug
 const route = useRoute()
 const router = useRouter()
 const cart = useCartStore()
 
-const product = ref(null)
+const product = ref<Product | null>(null)
 const loading = ref(true)
 const error = ref('')
 
 onMounted(async () => {
   try {
-    const data = await api.get(`/products/${route.params.slug}`)
-    product.value = data.data
+    const res = await api.raw<Product>(`/products/${route.params.slug}`)
+    product.value = res
   } catch (e) {
-    error.value = e.status === 404
+    const status = (e as { status?: number }).status
+    error.value = status === 404
       ? 'Produk tidak ditemukan.'
-      : e.status === 401
+      : status === 401
         ? 'Silakan login terlebih dahulu.'
-        : e.message
+        : (e as Error).message
   } finally {
     loading.value = false
   }
 })
 
-function back() {
+function back(): void {
   router.push({ name: 'products' })
 }
 
 // Aksi ke store global — badge di App.vue ikut berubah otomatis
-function addToCart() {
-  cart.add(product.value)
+function addToCart(): void {
+  if (product.value) cart.add(product.value)
 }
 </script>
 
@@ -47,7 +49,7 @@ function addToCart() {
   <template v-else-if="product">
     <h1>{{ product.name }}</h1>
     <p>
-      Harga: Rp {{ Number(product.price).toLocaleString('id-ID') }}<br>
+      Harga: Rp {{ product.price.toLocaleString('id-ID') }}<br>
       Stok: {{ product.stock }}<br>
       Opsi: {{ JSON.stringify(product.options) }}
     </p>

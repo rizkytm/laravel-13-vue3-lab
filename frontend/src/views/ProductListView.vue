@@ -1,8 +1,9 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProducts } from '../composables/useProducts'
 import ProductCard from '../components/ProductCard.vue'
+import type { Product } from '../types'
 
 const router = useRouter()
 
@@ -14,14 +15,14 @@ const search = ref('')
 
 // --- Computed: nilai TURUNAN dari state lain, di-cache & re-evaluate
 // otomatis saat dependensinya berubah (banding method: hitung ulang tiap render)
-const filtered = computed(() => {
+const filtered = computed<Product[]>(() => {
   const q = search.value.toLowerCase()
   return products.value.filter((p) => p.name.toLowerCase().includes(q))
 })
 
 onMounted(load)
 
-function open(product) {
+function open(product: Product): void {
   // Emit dari card ditangkap di sini → parent yang navigasi
   router.push({ name: 'product-detail', params: { slug: product.slug } })
 }

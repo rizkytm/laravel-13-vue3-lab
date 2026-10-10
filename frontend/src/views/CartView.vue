@@ -1,22 +1,23 @@
-<script setup>
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { api } from '../api'
 import { useApi } from '../composables/useApi'
 import { useCartStore } from '../stores/cart'
+import type { Order } from '../types'
 
 // Store = state global tunggal — semua komponen melihat angka yang sama
 const cart = useCartStore()
 const router = useRouter()
-const { loading, error, execute } = useApi()
+const { loading, error, execute } = useApi<{ data: Order; message: string }>()
 
 /**
  * Checkout penuh: cart (localStorage) → POST /api/v1/checkout →
  * backend transaksi + queue payment. Sukses → keranjang dikosongkan
  * dan pindah ke halaman pesanan (status 'pending', jadi 'paid' oleh worker).
  */
-async function checkout() {
+async function checkout(): Promise<void> {
   const result = await execute(() =>
-    api.post('/checkout', {
+    api.post<{ data: Order; message: string }>('/checkout', {
       items: cart.items.map((i) => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -28,6 +29,12 @@ async function checkout() {
     cart.clear()
     router.push({ name: 'orders' })
   }
+}
+
+// Handler eksplisit (bukan $event.target di template) — cast aman di satu tempat
+function onQtyChange(productId: number, event: Event): void {
+  const value = Number((event.target as HTMLInputElement).value)
+  cart.setQuantity(productId, value)
 }
 </script>
 
@@ -53,7 +60,7 @@ async function checkout() {
           min="1"
           :value="item.quantity"
           :data-testid="`qty-${item.product_id}`"
-          @change="cart.setQuantity(item.product_id, Number($event.target.value))"
+          @change="onQtyChange(item.product_id, $event)"
         >
       </td>
       <td>Rp {{ (item.price * item.quantity).toLocaleString('id-ID') }}</td>

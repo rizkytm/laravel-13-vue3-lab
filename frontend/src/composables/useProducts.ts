@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { api } from '../api'
+import type { Product } from '../types'
 
 /**
  * Composable: ambil daftar produk.
@@ -10,18 +11,19 @@ import { api } from '../api'
  * state hidup PER KOMponen yang memanggilnya (bukan global seperti store).
  */
 export function useProducts() {
-  const products = ref([])
+  const products = ref<Product[]>([])
   const loading = ref(true)
   const error = ref('')
 
-  async function load(query = '') {
+  async function load(query = ''): Promise<void> {
     loading.value = true
     error.value = ''
     try {
-      const data = await api.get(`/products?per_page=50${query}`)
-      products.value = data.data
+      const res = await api.get<Product>(`/products?per_page=50${query}`)
+      products.value = res.data
     } catch (e) {
-      error.value = e.status === 401 ? 'Silakan login terlebih dahulu.' : e.message
+      const status = (e as { status?: number }).status
+      error.value = status === 401 ? 'Silakan login terlebih dahulu.' : (e as Error).message
     } finally {
       loading.value = false
     }

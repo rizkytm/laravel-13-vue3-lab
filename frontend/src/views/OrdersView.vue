@@ -1,13 +1,14 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted } from 'vue'
 import { api } from '../api'
 import { useApi } from '../composables/useApi'
+import type { Order, Paginated } from '../types'
 
 // Order history dari API (auth via session cookie Sanctum SPA)
-const { data, loading, error, execute } = useApi()
+const { data, loading, error, execute } = useApi<Paginated<Order>>()
 
-function load() {
-  return execute(() => api.get('/orders?per_page=20'))
+function load(): Promise<Paginated<Order> | null> {
+  return execute(() => api.get<Order>('/orders?per_page=20'))
 }
 
 onMounted(load)
@@ -37,8 +38,8 @@ onMounted(load)
       <td>{{ order.id }}</td>
       <!-- 'pending' → 'paid' setelah queue worker memproses (M5) -->
       <td data-testid="order-status">{{ order.status }}</td>
-      <td>Rp {{ Number(order.total).toLocaleString('id-ID') }}</td>
-      <td>{{ order.items_count ?? (order.items?.length ?? 0) }}</td>
+      <td>Rp {{ order.total.toLocaleString('id-ID') }}</td>
+      <td>{{ order.items_count ?? order.items?.length ?? 0 }}</td>
       <td>{{ order.transaction_id || '—' }}</td>
     </tr>
   </table>
