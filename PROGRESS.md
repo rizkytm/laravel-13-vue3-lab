@@ -22,8 +22,8 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | M2 — Database & Eloquent | ✅ | `feat(M2)` | 27 test |
 | M3 — Validation, Auth & Authorization | ✅ | `feat(M3)` | 41 test: FormRequest, StockAvailable rule, session auth, OrderPolicy 403, rate limit 429, Sanctum token |
 | M4 — API Layer | ✅ | `feat(M4)` | 60 test: resources, offset+cursor pagination, checkout transaksional + rollback, payment driver config |
-| M5 — Events, Queues, Notifications, Mail | ⬜ | | lanjutan berikutnya |
-| M6 — Digging Deep (broadcast, cache, storage, i18n) | ⬜ | | |
+| M5 — Events, Queues, Notifications, Mail | ✅ | `feat(M5)` | 68 test: OrderPlaced event, ProcessPayment job (idempotent, backoff, failed()), notification mail+database, scheduler orders:cleanup |
+| M6 — Digging Deep (broadcast, cache, storage, i18n) | ⬜ | | lanjutan berikutnya |
 | M7 — Security, Error Handling, Logging | ⬜ | | |
 | M8 — Testing polish & dokumentasi | ⬜ | | |
 | F1 — Vue 3 setup + Composition API basics | ⬜ | | setelah M4 |
@@ -31,20 +31,24 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | F3 — Integrasi full-stack (Sanctum SPA) | ⬜ | | |
 | F4 — TypeScript migration | ⬜ | | |
 
-Test terakhir: **60 passed** (M4 selesai, commit `feat(M4)`).
+Test terakhir: **68 passed** (M5 selesai, commit `feat(M5)`).
 
-## Rencana M5 — Events, Queues, Notifications, Mail (belum dimulai)
+## Pertanyaan tertunda
 
-Gap utama — belum pernah dipakai semua:
-- **Events/Listeners** event discovery: `OrderPlaced` → `ReserveStock` (opsional, stok sudah
-  di-lock M4), `SendOrderConfirmation`. Catatan: charge di CheckoutController M4 masih
-  sync — pindahkan ke queue job `ProcessPayment` (retry, backoff, `failed()` hook)
-- **Idempotency**: flag `paid_at`/`transaction_id` di order — retry gak double-charge
-- **Notifications**: multi-channel — mail + database notification (tabel bawaan)
-- **Mail**: Mailable + markdown + attachment invoice sederhana
-- **Scheduler**: `routes/console.php` — cleanup abandoned order/carts + Artisan command custom
-- **Test**: `Queue::fake()`, `Event::fake()`, `Notification::fake()`, `Mail::fake()`
-- Queue driver: **database** (tabel `jobs` sudah ada dari migrasi bawaan)
+Jawab setelah seluruh implementasi selesai (M8 + fase F):
+
+- "Bagaimana best practice try catch block / error handling dan logging pada sebuah endpoint?"
+
+## Rencana M6 — Digging Deep (belum dimulai)
+
+- **Broadcasting**: stock/product update real-time (log driver cukup untuk konsep;
+  Reverb tidak dipasang — nanti fase infra)
+- **Cache**: `Cache::remember` query product + invalidation saat update;
+  beda cache store (array dev vs database)
+- **File storage**: upload gambar product (local disk) + `Storage::fake()` di test
+- **Localization**: `lang/` — rupiah/date format, `trans()` di view + API
+- Catatan: `config/payment.php` sudah menunjukkan pola config — M6 cache punya
+  pola serupa (`config/cache.php` bawaan)
 
 ## Perintah penting
 
