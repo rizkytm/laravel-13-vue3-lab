@@ -2,10 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
+import { useCartStore } from '../stores/cart'
 
 // Dynamic route: /products/:slug → params.slug
 const route = useRoute()
 const router = useRouter()
+const cart = useCartStore()
 
 const product = ref(null)
 const loading = ref(true)
@@ -29,6 +31,11 @@ onMounted(async () => {
 function back() {
   router.push({ name: 'products' })
 }
+
+// Aksi ke store global — badge di App.vue ikut berubah otomatis
+function addToCart() {
+  cart.add(product.value)
+}
 </script>
 
 <template>
@@ -44,5 +51,12 @@ function back() {
       Stok: {{ product.stock }}<br>
       Opsi: {{ JSON.stringify(product.options) }}
     </p>
+    <button
+      data-testid="add-to-cart"
+      :disabled="product.stock < 1"
+      @click="addToCart"
+    >
+      Tambah ke keranjang
+    </button>
   </template>
 </template>
