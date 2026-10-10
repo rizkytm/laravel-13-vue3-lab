@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-<h1>M2 — Eloquent: Produk</h1>
+<h1>{{ __('Product List') }}</h1>
 <nav>
     <a href="/">Checkout (M1)</a><a href="/orders">Orders</a>
     @auth

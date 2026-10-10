@@ -31,7 +31,9 @@ class CheckoutController extends Controller
     {
         $items = $request->validated('items');
 
-        $order = DB::transaction(function () use ($items, $request) {
+        $touchedProducts = [];
+
+        $order = DB::transaction(function () use ($items, $request, &$touchedProducts) {
             $order = Order::create([
                 'user_id' => $request->user()->id,
                 'status' => OrderStatus::Pending,
@@ -58,6 +60,8 @@ class CheckoutController extends Controller
                     'price' => $product->price, // snapshot harga saat checkout
                 ]);
 
+                $touchedProducts[] = $product;
+
                 $total += $product->price * $item['quantity'];
             }
 
@@ -68,6 +72,11 @@ class CheckoutController extends Controller
 
         // Event fire SETELAH commit — listener tidak boleh melihat data
         // yang belum konsisten (atau ikut ter-rollback).
+        // Broadcast stok juga di sini: kalau transaksi rollback, product
+        // di $touchedProducts tidak pernah di-broadcast (stok aslinya juga gak berubah).
+        foreach ($touchedProducts as $product) {
+            event(new \App\Events\StockUpdated($product));
+        }
         event(new OrderPlaced($order));
         ProcessPayment::dispatch($order);
 

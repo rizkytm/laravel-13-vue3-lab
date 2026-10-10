@@ -18,7 +18,9 @@
 <p>
     Pemilik: <strong>{{ $order->user->name }}</strong> ({{ $order->user->email }})<br>
     Status: <strong>{{ $order->status->value }}</strong><br>
-    Total: Rp {{ number_format($order->total, 0, ',', '.') }}
+    Total: Rp {{ number_format($order->total, 0, ',', '.') }}<br>
+    {{-- Locale-aware: ?lang=id → "10 Oktober 2026" (Carbon translation) --}}
+    {{ __('Created at') }}: {{ $order->created_at->isoFormat('D MMMM YYYY') }}
 </p>
 
 {{-- dilindungi OrderPolicy::view — halaman ini 403 untuk user lain --}}

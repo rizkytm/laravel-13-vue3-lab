@@ -15,6 +15,10 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::post('/products/{product:slug}/buy', [ProductController::class, 'buy'])->name('products.buy');
 
+// M6 — Upload & tampil gambar (disk privat, lewat controller)
+Route::post('/products/{product:slug}/image', [ProductController::class, 'uploadImage'])->name('products.image.store');
+Route::get('/products/{product:slug}/image', [ProductController::class, 'image'])->name('products.image');
+
 // M3 — Auth
 Route::get('/login', [LoginController::class, 'create'])->name('login');
 // throttle:login → RateLimiter 'login' (5/menit per email+ip) di AppServiceProvider

@@ -37,5 +37,22 @@
         <p class="err">{{ $message }}</p>
     @enderror
 </form>
+
+{{-- M6 — gambar dari disk privat, diserve oleh controller --}}
+@if ($product->image_path)
+    <p><img src="{{ route('products.image', $product) }}" alt="{{ $product->name }}" width="200"></p>
+@endif
+
+<form method="POST" action="{{ route('products.image.store', $product) }}" enctype="multipart/form-data">
+    @csrf
+    <fieldset>
+        <legend>{{ __('Upload product image') }}</legend>
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit">Upload</button>
+    </fieldset>
+    @error('image')
+        <p class="err">{{ $message }}</p>
+    @enderror
+</form>
 </body>
 </html>
