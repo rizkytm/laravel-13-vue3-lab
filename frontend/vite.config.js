@@ -1,23 +1,45 @@
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
+
+// GET /login = halaman SPA (deep-link & reload) — jangan kena proxy ke Laravel
+// blade. POST /login (form/JSON) tetap diteruskan oleh proxy di bawah.
+function spaLoginRoute() {
+  return {
+    name: 'spa-login-route',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.method === 'GET' && req.url?.startsWith('/login')) {
+          req.url = '/index.html'
+        }
+        next()
+      })
+    },
+  }
+}
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [vue(), tailwindcss()],
-  server: {
-    proxy: {
-      // Dev: rute Laravel diteruskan ke php artisan serve (:8000).
-      // Cookie localhost gak peduli port — session laravel_session/XSRF
-      // yang di-set lewat proxy dipakai silang 5173 <-> 8000.
-      // Production bebas: build statis diserve Laravel/CDN, CORS disesuaikan.
-      '/api': 'http://127.0.0.1:8000',
-      '/sanctum': 'http://127.0.0.1:8000',
-      '/login': 'http://127.0.0.1:8000',
-      '/logout': 'http://127.0.0.1:8000',
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const backend = env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+
+  return {
+    plugins: [vue(), tailwindcss(), spaLoginRoute()],
+    server: {
+      proxy: {
+        // Dev: rute Laravel diteruskan ke backend dari VITE_BACKEND_URL.
+        // changeOrigin:false → Host asli dipertahankan → redirect Laravel
+        // (route()) menghasilkan URL origin SPA (:5173), bukan backend —
+        // kalau tidak, fetch() browser ngikut redirect lintas origin → Failed to fetch.
+        // Cookie localhost gak peduli port — session dipakai silang 5173 <-> backend.
+        '/api': { target: backend, changeOrigin: false },
+        '/sanctum': { target: backend, changeOrigin: false },
+        '/login': { target: backend, changeOrigin: false },
+        '/logout': { target: backend, changeOrigin: false },
+      },
     },
-  },
-  test: {
-    environment: 'jsdom',
-  },
+    test: {
+      environment: 'jsdom',
+    },
+  }
 })

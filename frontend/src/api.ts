@@ -102,12 +102,21 @@ async function parseOrThrow(res: Response): Promise<unknown> {
 // SPA login → endpoint WEB (session), bukan /api/token
 export async function spaLogin(email: string, password: string): Promise<void> {
   await csrf()
-  await parseOrThrow(await fetch('/login', {
+  const res = await fetch('/login', {
     method: 'POST',
     credentials: 'include',
+    // Jangan follow 302: targetnya rute SPA (/orders dst) yang dilayani
+    // index.html — fetch Accept: application/json di-fallback 404 oleh Vite.
+    // Sukses/gagal login SAMA-SAMA 302 → dibuktikan GET /api/user oleh auth store.
+    redirect: 'manual',
     headers: authHeaders(),
     body: JSON.stringify({ email, password }),
-  }))
+  })
+  // opaqueredirect (browser) / 3xx mentah (impl lain) = redirect diterima
+  if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
+    return
+  }
+  await parseOrThrow(res)
 }
 
 export async function spaLogout(): Promise<void> {

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { clearToken, request, spaLogin, spaLogout } from '../api'
-import type { User } from '../types'
+import type { ApiError, User } from '../types'
 
 /**
  * Auth store — sumber kebenaran "siapa yang login".
@@ -28,6 +28,13 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(email: string, password: string): Promise<void> {
     await spaLogin(email, password) // csrf-cookie → POST /login (session)
     await fetchUser()
+    // Redirect /login bisa beres apa pun hasilnya (selalu 200 HTML SPA) —
+    // keberhasilan autentikasi dibuktikan oleh /api/user, bukan bentuk response.
+    if (!user.value) {
+      const error = new Error('Email atau password salah.') as ApiError
+      error.status = 401
+      throw error
+    }
   }
 
   async function logout(): Promise<void> {

@@ -15,7 +15,7 @@ app.use(router)
 // Inject di komponen mana pun: inject<AppConfig>('appConfig')
 app.provide('appConfig', {
   appName: 'Laravel 13 Lab',
-  apiBase: '/api/v1',
+  apiBase: import.meta.env.VITE_API_BASE || '/api/v1',
 } satisfies AppConfig)
 
 app.mount('#app')

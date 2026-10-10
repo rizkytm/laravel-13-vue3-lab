@@ -29,11 +29,20 @@ const router = createRouter({
 // Guard ASYNC: session cookie tidak bisa dicek sinkron dari JS —
 // tanya backend (GET /api/user) SEBELUM masuk halaman yang butuh login.
 router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+
+  // /login hanya untuk tamu — yang sudah login dibalik ke beranda
+  if (to.name === 'login') {
+    if (!auth.user) {
+      await auth.fetchUser()
+    }
+    return auth.user ? { name: 'products' } : true
+  }
+
   if (!to.meta.requiresAuth) {
     return true
   }
 
-  const auth = useAuthStore()
   if (!auth.user) {
     await auth.fetchUser()
   }
