@@ -1,8 +1,11 @@
 <?php
 
+use App\Events\OrderPlaced;
+use App\Jobs\ProcessPayment;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\OrderConfirmation;
 use App\Services\Payment\PaymentGateway;
 use Laravel\Sanctum\Sanctum;
 
@@ -29,7 +32,9 @@ it('rejects invalid product id (exists rule)', function () {
     ])->assertStatus(422)->assertJsonValidationErrors('items.0.product_id');
 });
 
-it('creates order, decrements stock, charges gateway', function () {
+it('creates order, decrements stock, queues payment (M5 async)', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+
     $user = User::factory()->create();
     $p1 = Product::factory()->create(['price' => 10000, 'stock' => 5]);
     $p2 = Product::factory()->create(['price' => 20000, 'stock' => 5]);
@@ -42,10 +47,12 @@ it('creates order, decrements stock, charges gateway', function () {
         ],
     ]);
 
+    // 201 TANPA transaction_id — pembayaran diproses di worker
     $response->assertCreated()
-        ->assertJsonStructure(['data' => ['id', 'status', 'total', 'items'], 'transaction_id'])
+        ->assertJsonStructure(['data' => ['id', 'status', 'total', 'items'], 'message'])
         ->assertJsonPath('data.total', 40000)
-        ->assertJsonPath('data.status', 'pending');
+        ->assertJsonPath('data.status', 'pending')
+        ->assertJsonPath('data.transaction_id', null);
 
     expect($p1->fresh()->stock)->toBe(3)
         ->and($p2->fresh()->stock)->toBe(4);
@@ -54,12 +61,30 @@ it('creates order, decrements stock, charges gateway', function () {
     expect($order->items)->toHaveCount(2)
         ->and($order->user_id)->toBe($user->id);
 
-    // Gateway singleton yang sama → charge tercatat (interface M1)
-    expect(app(PaymentGateway::class)->charges)->toHaveCount(1)
-        ->and(app(PaymentGateway::class)->charges[0])->toBe(40000);
+    // Payment masuk queue, bukan jalan di request
+    \Illuminate\Support\Facades\Queue::assertPushed(
+        ProcessPayment::class,
+        fn (ProcessPayment $job) => $job->order->is($order)
+    );
+});
+
+it('fires OrderPlaced event on successful checkout', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+    $user = User::factory()->create();
+    $product = Product::factory()->create(['stock' => 5]);
+    Sanctum::actingAs($user);
+
+    $this->postJson('/api/v1/checkout', [
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
+    ])->assertCreated();
+
+    // Listener sudah jalan (event discovery) → notification ikut ter-queue
+    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class);
 });
 
 it('rolls back whole order when any item has insufficient stock', function () {
+    \Illuminate\Support\Facades\Queue::fake();
+
     $user = User::factory()->create();
     $ok = Product::factory()->create(['price' => 10000, 'stock' => 5]);
     $lack = Product::factory()->create(['price' => 20000, 'stock' => 1]);
@@ -72,7 +97,9 @@ it('rolls back whole order when any item has insufficient stock', function () {
         ],
     ])->assertStatus(422)->assertJsonValidationErrors('items');
 
-    expect(Order::count())->toBe(0)                                    // order pertama ikut rollback
-        ->and($ok->fresh()->stock)->toBe(5)                            // pengurangan pertama dibatalkan
-        ->and(app(PaymentGateway::class)->charges)->toBeEmpty();       // gak ada charge tanpa order
+    expect(Order::count())->toBe(0)                    // order pertama ikut rollback
+        ->and($ok->fresh()->stock)->toBe(5);           // pengurangan pertama dibatalkan
+
+    // Event/job tidak pernah sampai di-dispatch — gak ada charge tanpa order
+    \Illuminate\Support\Facades\Queue::assertNothingPushed();
 });

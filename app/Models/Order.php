@@ -12,7 +12,7 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'status', 'total'];
+    protected $fillable = ['user_id', 'status', 'total', 'transaction_id', 'paid_at'];
 
     protected function casts(): array
     {
@@ -20,6 +20,7 @@ class Order extends Model
             // Enum cast: $order->status === OrderStatus::Paid (bukan 'paid' string)
             'status' => OrderStatus::class,
             'total' => 'integer',
+            'paid_at' => 'datetime', // ->toIso8601String() di resource butuh Carbon
         ];
     }
 

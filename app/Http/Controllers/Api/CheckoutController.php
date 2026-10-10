@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
+use App\Events\OrderPlaced;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
 use App\Http\Resources\OrderResource;
+use App\Jobs\ProcessPayment;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\Payment\PaymentGateway;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,12 +17,17 @@ use Illuminate\Validation\ValidationException;
 class CheckoutController extends Controller
 {
     /**
-     * POST /api/v1/checkout — buat order dari items + charge gateway.
+     * POST /api/v1/checkout — buat order dari items, queue payment.
      *
-     * Urutan: transaksi (order + items + kurangi stok) dulu, charge SETELAH commit.
-     * Kalau charge gagal → order tetap Pending (idempotent retry di M5 via queue).
+     * Urutan:
+     * 1. Transaksi DB (order + items + kurangi stok) — atomic, bisa rollback
+     * 2. Setelah commit: fire event OrderPlaced (→ notifikasi via listener)
+     * 3. Queue ProcessPayment (→ charge gateway di worker, bukan di request)
+     *
+     * Response 201 TANPA transaction_id — pembayaran diproses async.
+     * Id selesai (paid/failed) terlihat lewat GET /api/v1/orders/{id}.
      */
-    public function store(CheckoutRequest $request, PaymentGateway $gateway): JsonResponse
+    public function store(CheckoutRequest $request): JsonResponse
     {
         $items = $request->validated('items');
 
@@ -60,13 +66,16 @@ class CheckoutController extends Controller
             return $order;
         });
 
-        $transactionId = $gateway->charge($order->total);
+        // Event fire SETELAH commit — listener tidak boleh melihat data
+        // yang belum konsisten (atau ikut ter-rollback).
+        event(new OrderPlaced($order));
+        ProcessPayment::dispatch($order);
 
         $order->load('items.product');
 
         return response()->json([
             'data' => new OrderResource($order),
-            'transaction_id' => $transactionId,
+            'message' => 'Pembayaran sedang diproses.',
         ], 201);
     }
 }

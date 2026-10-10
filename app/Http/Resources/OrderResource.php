@@ -13,6 +13,8 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'status' => $this->status->value, // enum cast → string untuk JSON
             'total' => $this->total,
+            'transaction_id' => $this->transaction_id, // null sampai job ProcessPayment sukses
+            'paid_at' => $this->paid_at?->toIso8601String(),
             // withCount/loadCount mengisi ATTRIBUTE (bukan relasi) —
             // relationLoaded('items_count') selalu false. isset pada attribute
             // = key muncul hanya kalau count memang diminta di query.
