@@ -43,6 +43,9 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
   + driver di phpunit.xml di project ini)
 - Ingatkan Rizky untuk cek ulang docs Laravel (laravel.com/docs) — cari hal-hal yang
   mungkin belum terimplementasi di project ini (mis. fitur yang belum tersentuh milestone).
+- Ingatkan untuk membuatkan docs mengenai fitur-fitur yang ada di project ini
+  (penjelasan per fitur: cara kerja, cara pakai, lokasi kode — dari isi PROGRESS,
+  AUDIT, dan README yang sudah ada).
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
