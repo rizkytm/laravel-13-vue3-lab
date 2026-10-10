@@ -327,3 +327,66 @@ Di TS strict, `e` di catch bertipe `unknown` (bisa apa pun). Cast dibatasi di
 Vitest menjalankan JS apa adanya; konversi 35 file test = noise tanpa nilai
 tambahan. Typecheck hanya `include: src` — konversi source dulu, test menyusul
 kalau perlu.
+
+---
+
+## Pertanyaan Tertunda (Terjawab — setelah implementasi selesai)
+
+**1. Best practice try/catch, error handling & logging di endpoint?**
+Prinsip: **endpoint jangan berisi try/catch berlapis — Laravel punya exception
+handler global.**
+- Validasi → biarkan `ValidationException` (422 otomatis), jangan return error manual.
+- Jangan catch lalu swallow — catch hanya untuk (a) pemulihan/fallback,
+  (b) terjemahan ke exception domain (`PaymentGatewayException`), (c) cleanup.
+  Selain itu biarkan lepas ke handler.
+- Handler memisahkan `render()` (response) dan `report()` (catatan) — custom
+  render mengganti bentuk, exception TETAP ter-log. Jangan sembunyikan dari report.
+- Level tepat: `info` = event bisnis (`checkout.completed`), `warning` = anomali
+  tertangani, `error` = kegagalan. Structured (name + context array), bukan
+  string concat — `request_id` otomatis nempel via `withContext`. Jangan log rahasia.
+- Di queue job: jangan catch di `handle()` — biarkan lepas → retry/backoff → `failed()`.
+- Contoh di proyek ini: FormRequest (422), custom render 404/403 (M7),
+  `Log::info` terstruktur, `ProcessPayment::failed()`.
+
+**2. Test unit/feature: mock, database transaction, atau DB khusus testing?**
+**Ketiganya dipakai untuk hal berbeda** (lihat `phpunit.xml`):
+- **DB = SQLite `:memory:`** (`DB_DATABASE` di-override di phpunit.xml) —
+  database MEMORI terpisah dari file dev, fresh tiap process test.
+  `RefreshDatabase` migrate sekali per process; **tiap test dibungkus
+  `beginTransaction()` → di-rollback** → isolasi antar test. Cepat + aman.
+- **Dependensi eksternal di-fake**: `Queue::fake`, `Http::fake`,
+  `Storage::fake`, `Notification::fake`, `Log::spy`; driver phpunit:
+  queue=sync, mail=array, cache/array, session=array.
+- **Unit test murni** (`OrderSummaryTest`): tanpa Application, tanpa DB.
+- DB sengaja TIDAK di-mock — N+1, `lockForUpdate`, rollback harus diuji asli.
+
+**3. Kenapa unit test lebih sedikit dari feature test di Laravel?**
+1. Nilai framework = **integrasi** — route+middleware+container+Eloquent+auth
+   baru terbukti bersama; unit test yang mock separuh framework menguji mock-nya sendiri.
+2. Eloquent sulit di-unit-test (harus mock DB = mahal/rapuh); feature test +
+   SQLite murah (91 test ≈ 2,5 detik).
+3. Feature test menangkap bug yang terlihat: route salah, middleware kelewat,
+   binding error, 500 — di luar jangkauan unit test.
+4. Unit test tetap ada untuk logika murni (OrderSummary, cart, rule) — tapi memang minoritas.
+5. Stabilitas: refactor internal mematahkan unit test tanpa mengubah behavior;
+   feature test bertahan selama perilaku publik sama.
+- Rasio tepat untuk CRUD-heavy app: **feature-dominan**; unit test menang di
+  logika domain murni (money, parsing, algoritma).
+
+**4. Apakah data product di SQLite terhapus saat menjalankan test?**
+**TIDAK.** `phpunit.xml` meng-override `DB_CONNECTION=sqlite` +
+`DB_DATABASE=:memory:` → test berjalan di database memori terpisah, file
+`database/database.sqlite` dev tidak pernah disentuh. Data dev aman, tidak
+perlu `db:seed` ulang setelah test.
+(Catatan: kalau override ini TIDAK ada, `RefreshDatabase` memulai dengan
+`migrate:fresh` → data dev HILANG tiap `php artisan test` — itulah kenapa
+`DB_DATABASE=:memory:` wajib di phpunit.xml.)
+
+**5. Perlu tambah unit test sekarang?**
+**Tidak perlu.** Suite sudah 94 PHP + 35 FE dan hijau — menambah unit test
+demi rasio angka = gold-plating. Unit test bertambah **natural** kalau:
+1. Test manual E2E menemukan bug → setiap bug = 1 test reproduksi (prioritas).
+2. Logika domain murni baru masuk (diskon/PPn, parser) → unit test tempatnya.
+3. Suite mulai lambat → ekstrak hot path ke unit.
+4. Ada gap jelas dari audit/manual testing.
+2 unit test PHP wajar untuk app begini (feature-dominan) — bukan kekurangan.
