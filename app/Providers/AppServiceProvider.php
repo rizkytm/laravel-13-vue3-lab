@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Payment\FakePaymentGateway;
+use App\Services\Payment\HttpPaymentGateway;
 use App\Services\Payment\PaymentGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -17,10 +18,17 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Container binding: interface → implementasi.
-        // Singleton = 1 instance per request lifecycle — semua yang
-        // resolve PaymentGateway melihat instance (dan log charge) yang sama.
-        // Ganti payment provider asli nanti? Cukup ubah 1 baris ini.
-        $this->app->singleton(PaymentGateway::class, FakePaymentGateway::class);
+        // Singleton = 1 instance per request lifecycle.
+        // Driver dipilih dari config('payment.driver'):
+        //   PAYMENT_DRIVER=fake → FakePaymentGateway (dev/test)
+        //   PAYMENT_DRIVER=http → HttpPaymentGateway (provider asli)
+        // Controller tetap hanya tahu PaymentGateway — ganti driver tanpa
+        // menyentuh satu baris controller pun (Open/Closed).
+        $this->app->singleton(PaymentGateway::class, function ($app) {
+            return $app['config']['payment.driver'] === 'http'
+                ? $app->make(HttpPaymentGateway::class)
+                : $app->make(FakePaymentGateway::class);
+        });
     }
 
     /**
