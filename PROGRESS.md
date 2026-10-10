@@ -58,6 +58,8 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 - Ingatkan untuk mengetes seluruh fitur secara manual end-to-end (browser +
   curl) guna mencari bug — jalankan semua alur: login, browse, checkout,
   queue, invoice signed, API v1, locale, upload gambar.
+- Ingatkan untuk fix warning yang muncul di `npm run dev` (Vite/Vue) —
+  dev server harus jalan bersih tanpa warning.
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
