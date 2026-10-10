@@ -31,3 +31,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
+
+// M7 — invoice TANPA auth: otorisasi = signature valid (middleware 'signed').
+// Link temporarySignedRoute (30 menit) ada di halaman order detail.
+Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])
+    ->middleware('signed')
+    ->name('orders.invoice');

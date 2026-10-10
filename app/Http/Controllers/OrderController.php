@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class OrderController extends Controller
@@ -35,7 +36,21 @@ class OrderController extends Controller
         Gate::authorize('view', $order);
 
         $order->load(['user', 'items.product']);
+        $order->loadCount('items'); // isi items_count di resource
 
         return view('orders.show', compact('order'));
+    }
+
+    /**
+     * Invoice via SIGNED URL — endpoint tanpa auth biasa, otorisasi =
+     * signature valid + belum expired (middleware 'signed').
+     * Kasus nyata: kirim link invoice ke guest/customer via email.
+     * Link-nya digenerate temporarySignedRoute (30 menit) di halaman show.
+     */
+    public function invoice(Order $order): View
+    {
+        $order->load(['user', 'items.product']);
+
+        return view('orders.invoice', compact('order'));
     }
 }

@@ -17,10 +17,19 @@
 
 <p>
     Pemilik: <strong>{{ $order->user->name }}</strong> ({{ $order->user->email }})<br>
+    {{-- phone = encrypted cast: tampil plaintext di sini, ciphertext di DB --}}
+    Telepon: {{ $order->user->phone }}<br>
     Status: <strong>{{ $order->status->value }}</strong><br>
     Total: Rp {{ number_format($order->total, 0, ',', '.') }}<br>
     {{-- Locale-aware: ?lang=id → "10 Oktober 2026" (Carbon translation) --}}
     {{ __('Created at') }}: {{ $order->created_at->isoFormat('D MMMM YYYY') }}
+</p>
+
+{{-- M7 — link invoice signed, berlaku 30 menit, bisa dibuka guest tanpa login --}}
+<p>
+    <a href="{{ URL::temporarySignedRoute('orders.invoice', now()->addMinutes(30), $order) }}">
+        Buka invoice (signed URL, 30 menit)
+    </a>
 </p>
 
 {{-- dilindungi OrderPolicy::view — halaman ini 403 untuk user lain --}}

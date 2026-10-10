@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
@@ -81,6 +82,15 @@ class CheckoutController extends Controller
         ProcessPayment::dispatch($order);
 
         $order->load('items.product');
+
+        // Structured log (JSON channel): event bisnis + context —
+        // request_id dari AssignRequestId ikut otomatis di baris ini.
+        Log::info('checkout.completed', [
+            'order_id' => $order->id,
+            'user_id' => $request->user()->id,
+            'total' => $order->total,
+            'items' => count($items),
+        ]);
 
         return response()->json([
             'data' => new OrderResource($order),

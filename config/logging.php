@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -110,6 +111,21 @@ return [
                 'stream' => 'php://stderr',
             ],
             'formatter' => env('LOG_STDERR_FORMATTER'),
+            'processors' => [PsrLogMessageProcessor::class],
+        ],
+
+        // Channel LAB: JSON per baris — message, level, time, channel,
+        // PLUS context otomatis (request_id dari Log::withContext, order_id,
+        // dst) — struktur yang dibutuhkan pipeline log (ELK) nanti.
+        // Dipilih via LOG_CHANNEL=json di .env
+        'json' => [
+            'driver' => 'monolog',
+            'level' => env('LOG_LEVEL', 'debug'),
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => storage_path('logs/laravel.log'),
+            ],
+            'formatter' => JsonFormatter::class,
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
