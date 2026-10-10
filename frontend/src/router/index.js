@@ -3,7 +3,8 @@ import ProductListView from '../views/ProductListView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import LoginView from '../views/LoginView.vue'
 import CartView from '../views/CartView.vue'
-import { getToken } from '../api'
+import OrdersView from '../views/OrdersView.vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -18,15 +19,27 @@ const router = createRouter({
     },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/cart', name: 'cart', component: CartView, meta: { requiresAuth: true } },
+    { path: '/orders', name: 'orders', component: OrdersView, meta: { requiresAuth: true } },
   ],
 })
 
-// Route guard sederhana: halaman yang butuh token → login dulu.
-// Versi lengkap (cookie session Sanctum) menyusul di F3.
-router.beforeEach((to) => {
-  if (to.meta.requiresAuth && !getToken()) {
+// Guard ASYNC: session cookie tidak bisa dicek sinkron dari JS —
+// tanya backend (GET /api/user) SEBELUM masuk halaman yang butuh login.
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth) {
+    return true
+  }
+
+  const auth = useAuthStore()
+  if (!auth.user) {
+    await auth.fetchUser()
+  }
+
+  if (!auth.user) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
+
+  return true
 })
 
 export default router

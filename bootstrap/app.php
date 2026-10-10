@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\AssignRequestId::class,
         ]);
+        // Sanctum SPA auth: request dari domain stateful (Vite dev :5173)
+        // di-wrap dengan session middleware → /api/* bisa auth via cookie
+        // session, bukan hanya Bearer token.
+        $middleware->api(prepend: [\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);
         $middleware->api(append: [\App\Http\Middleware\AssignRequestId::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

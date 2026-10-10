@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { login } from '../api'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
+const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -13,8 +14,8 @@ const error = ref('')
 async function submit() {
   error.value = ''
   try {
-    // POST /api/token → simpan Bearer token → semua request berikut otomatis
-    await login(email.value, password.value)
+    // Sanctum SPA: csrf-cookie → POST /login (session) → fetch /api/user
+    await auth.login(email.value, password.value)
     router.push(route.query.redirect || { name: 'products' })
   } catch (e) {
     error.value = e.status === 401 ? 'Email atau password salah.' : e.message

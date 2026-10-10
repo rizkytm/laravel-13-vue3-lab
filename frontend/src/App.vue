@@ -1,19 +1,22 @@
 <script setup>
-import { inject, ref } from 'vue'
+import { inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { clearToken, getToken } from './api'
+import { useAuthStore } from './stores/auth'
 import { useCartStore } from './stores/cart'
 
 const router = useRouter()
 // inject: nilai dari app.provide('appConfig') — tanpa prop drilling
 const config = inject('appConfig')
 
-const isLoggedIn = ref(!!getToken())
-const cart = useCartStore() // store global — state sama di semua komponen
+const auth = useAuthStore() // state global: siapa yang login
+const cart = useCartStore() // state global: isi keranjang
 
-function logout() {
-  clearToken()
-  isLoggedIn.value = false
+// Cek session sekali saat boot — nav langsung tampil benar
+// (guard route tetap jadi penjaga utama)
+onMounted(() => auth.fetchUser())
+
+async function logout() {
+  await auth.logout()
   router.push({ name: 'login' })
 }
 </script>
@@ -21,12 +24,16 @@ function logout() {
 <template>
   <nav>
     <strong>{{ config.appName }}</strong>
-    <router-link to="/">Produk</router-link>
-    <!-- Badge langsung reaktif: cart.count berubah → render ulang otomatis -->
-    <router-link :to="{ name: 'cart' }">
-      Keranjang ({{ cart.count }}) — Rp {{ cart.total.toLocaleString('id-ID') }}
-    </router-link>
-    <button v-if="isLoggedIn" @click="logout">Logout</button>
+    <template v-if="auth.user">
+      <router-link to="/">Produk</router-link>
+      <!-- Badge langsung reaktif: cart.count berubah → render ulang otomatis -->
+      <router-link :to="{ name: 'cart' }">
+        Keranjang ({{ cart.count }}) — Rp {{ cart.total.toLocaleString('id-ID') }}
+      </router-link>
+      <router-link :to="{ name: 'orders' }">Pesanan</router-link>
+      <span>{{ auth.user.name }}</span>
+      <button @click="logout">Logout</button>
+    </template>
     <router-link v-else to="/login">Login</router-link>
   </nav>
 
