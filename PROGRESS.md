@@ -23,32 +23,32 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | M3 — Validation, Auth & Authorization | ✅ | `feat(M3)` | 41 test: FormRequest, StockAvailable rule, session auth, OrderPolicy 403, rate limit 429, Sanctum token |
 | M4 — API Layer | ✅ | `feat(M4)` | 60 test: resources, offset+cursor pagination, checkout transaksional + rollback, payment driver config |
 | M5 — Events, Queues, Notifications, Mail | ✅ | `feat(M5)` | 68 test: OrderPlaced event, ProcessPayment job (idempotent, backoff, failed()), notification mail+database, scheduler orders:cleanup |
-| M6 — Digging Deep (broadcast, cache, storage, i18n) | ⬜ | | lanjutan berikutnya |
-| M7 — Security, Error Handling, Logging | ⬜ | | |
+| M6 — Digging Deep (broadcast, cache, storage, i18n) | ✅ | `feat(M6)` | 77 test: StockUpdated broadcast (after-commit!), cache list + invalidation, upload gambar disk privat, SetLocale ?lang= |
+| M7 — Security, Error Handling, Logging | ⬜ | | lanjutan berikutnya |
 | M8 — Testing polish & dokumentasi | ⬜ | | |
 | F1 — Vue 3 setup + Composition API basics | ⬜ | | setelah M4 |
 | F2 — Pinia + composables | ⬜ | | |
 | F3 — Integrasi full-stack (Sanctum SPA) | ⬜ | | |
 | F4 — TypeScript migration | ⬜ | | |
 
-Test terakhir: **68 passed** (M5 selesai, commit `feat(M5)`).
+Test terakhir: **77 passed** (M6 selesai, commit `feat(M6)`).
 
 ## Pertanyaan tertunda
 
 Jawab setelah seluruh implementasi selesai (M8 + fase F):
 
 - "Bagaimana best practice try catch block / error handling dan logging pada sebuah endpoint?"
+- Ingatkan Rizky untuk cek ulang docs Laravel (laravel.com/docs) — cari hal-hal yang
+  mungkin belum terimplementasi di project ini (mis. fitur yang belum tersentuh milestone).
 
-## Rencana M6 — Digging Deep (belum dimulai)
+## Rencana M7 — Security, Error Handling & Logging (belum dimulai)
 
-- **Broadcasting**: stock/product update real-time (log driver cukup untuk konsep;
-  Reverb tidak dipasang — nanti fase infra)
-- **Cache**: `Cache::remember` query product + invalidation saat update;
-  beda cache store (array dev vs database)
-- **File storage**: upload gambar product (local disk) + `Storage::fake()` di test
-- **Localization**: `lang/` — rupiah/date format, `trans()` di view + API
-- Catatan: `config/payment.php` sudah menunjukkan pola config — M6 cache punya
-  pola serupa (`config/cache.php` bawaan)
+- Kaitkan `checklist-code-review.md` + ASVS: mass assignment (M2 ✓), policy (M3 ✓) — audit ulang
+- Encryptable casts untuk field sensitif, signed URL (guest checkout link), password hashing
+- Exception handling: `withExceptions` → custom format 404/422/500 JSON (perbaiki
+  `shouldRenderJsonWhen` yang sudah ada)
+- **Structured logging** (JSON) + `Log::context()` correlation id per request —
+  kaitan roadmap poin 2 (ELK). Catatan pertanyaan tertunda di atas gak jauh dari ini
 
 ## Perintah penting
 
