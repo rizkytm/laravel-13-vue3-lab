@@ -43,12 +43,12 @@ it('rejects invalid quantity', function () {
     expect($product->fresh()->stock)->toBe(10);
 });
 
-it('shows error and keeps stock when insufficient', function () {
+it('rejects quantity above stock via StockAvailable rule', function () {
     $product = Product::factory()->create(['stock' => 2]);
 
-    $this->post('/products/'.$product->slug.'/buy', ['quantity' => 50])
-        ->assertRedirect()
-        ->assertSessionHas('error');
+    $this->from('/products/'.$product->slug)
+        ->post('/products/'.$product->slug.'/buy', ['quantity' => 50])
+        ->assertSessionHasErrors('quantity');
 
     expect($product->fresh()->stock)->toBe(2);
 });

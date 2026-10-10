@@ -14,7 +14,17 @@
 </head>
 <body>
 <h1>M2 — Eloquent: Produk</h1>
-<nav><a href="/">Checkout (M1)</a><a href="/orders">Orders</a></nav>
+<nav>
+    <a href="/">Checkout (M1)</a><a href="/orders">Orders</a>
+    @auth
+        <form method="POST" action="{{ route('logout') }}" style="display:inline">
+            @csrf
+            <button type="submit">Logout ({{ auth()->user()->name }})</button>
+        </form>
+    @else
+        <a href="{{ route('login') }}">Login</a>
+    @endauth
+</nav>
 
 @if (session('success')) <p class="ok">{{ session('success') }}</p> @endif
 @if (session('error')) <p class="err">{{ session('error') }}</p> @endif

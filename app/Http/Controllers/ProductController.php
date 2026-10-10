@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BuyProductRequest;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -36,18 +36,17 @@ class ProductController extends Controller
 
     /**
      * Beli (demo M2): kurangi stok dengan lockForUpdate.
-     * Checkout penuh (order + items) dibangun di M4-M5.
+     * Validasi pindah ke BuyProductRequest — controller menerima
+     * data yang sudah valid. Checkout penuh dibangun di M4-M5.
      */
-    public function buy(Request $request, Product $product): RedirectResponse
+    public function buy(BuyProductRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:1'],
-        ]);
+        $quantity = $request->validated('quantity');
 
-        $bought = $product->buy($validated['quantity']);
+        $bought = $product->buy($quantity);
 
         return $bought
-            ? redirect()->back()->with('success', "Berhasil membeli {$validated['quantity']} × {$product->name}. Sisa stok: {$product->stock}")
-            : redirect()->back()->with('error', 'Stok tidak cukup');
+            ? redirect()->back()->with('success', "Berhasil membeli {$quantity} × {$product->name}. Sisa stok: {$product->stock}")
+            : redirect()->back()->with('error', 'Stok tidak cukup'); // fallback race — lapisan utama di rule + lock
     }
 }

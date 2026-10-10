@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Services\Payment\FakePaymentGateway;
 use App\Services\Payment\PaymentGateway;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +28,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Brute-force protection: 5 percobaan gagal per menit
+        // per kombinasi email+ip → attempt ke-6 dapat 429.
+        // Dipakai via middleware 'throttle:login' di routes/web.php.
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinute(5)->by(
+                strtolower($request->input('email')).'|'.$request->ip()
+            );
+        });
     }
 }
