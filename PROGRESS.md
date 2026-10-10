@@ -50,24 +50,29 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 Reminder aksi (belum dikerjakan):
 - Ingatkan Rizky untuk cek ulang docs Laravel (laravel.com/docs) — cari hal-hal yang
   mungkin belum terimplementasi di project ini (mis. fitur yang belum tersentuh milestone).
-- Ingatkan untuk membuatkan docs mengenai fitur-fitur yang ada di project ini
-  (penjelasan per fitur: cara kerja, cara pakai, lokasi kode — dari isi PROGRESS,
-  AUDIT, dan README yang sudah ada).
+- ~~Ingatkan untuk membuatkan docs mengenai fitur-fitur~~ — SELESAI: **`FEATURES.md`**
+  (per fitur: cara kerja, lokasi kode, langkah tes manual + expected — sekaligus
+  checklist tes manual E2E section A–F).
 - ~~Ingatkan untuk push ke repo baru~~ — SELESAI: https://github.com/rizkytm/laravel-13-vue3-lab (public)
 - ~~Ingatkan untuk membuatkan GitHub Actions (CI)~~ — SELESAI: `.github/workflows/ci.yml`
   (path-filtered backend: pint + 94 PHP test + composer audit; frontend: eslint +
   vue-tsc + 35 Vitest + npm audit critical) + `.github/dependabot.yml` (weekly)
-- Ingatkan untuk menjalankan `npm audit fix` (root & `frontend/`) — jalankan saat
-  advisories masuk, cek dulu perubahan breaking sebelum commit.
+- ~~Ingatkan untuk menjalankan `npm audit fix` (root & `frontend/`)~~ — SELESAI:
+  `npm audit` root + frontend = 0 vulnerabilities, `composer audit` = bersih,
+  gak ada yang perlu difix. CI jaga otomatis tiap push.
 - ~~Ingatkan untuk gunakan Tailwind CSS untuk styling frontend~~ — SELESAI:
   Tailwind v4 (Vite plugin), token di `src/style.css` (`@theme` OKLCH: warm
   neutrals + accent terracotta), system font + mono buat ID, semua view restyle.
 - Ingatkan untuk mengecek apakah bisa implement Laravel Filament untuk
   admin dashboardnya (resource Product/Order, review dulu apakah Filament 4
   kompatibel Laravel 13 + sepadan vs bikin sendiri).
-- Ingatkan untuk mengetes seluruh fitur secara manual end-to-end (browser +
-  curl) guna mencari bug — jalankan semua alur: login, browse, checkout,
-  queue, invoice signed, API v1, locale, upload gambar.
+- Ingatkan untuk mengetes seluruh fitur secara manual end-to-end → kerjakan
+  checklist **`FEATURES.md`** (browser + curl, alur: login, browse, checkout,
+  queue, invoice signed, API v1, locale, upload gambar). Temuan bug dicatat
+  dulu, jangan dibetulkan diam-diam.
+- E2E automation (keputusan): **Playwright**, bukan Cypress (multi-tab, auto-wait,
+  standar industri). Pasang SETELAH manual pass — bug dari FEATURES.md jadi test
+  pertama. Konfigurasi nanti: `webServer` array (artisan serve + vite), queue sync.
 - Ingatkan untuk fix warning yang muncul di `npm run dev` (Vite/Vue) —
   dev server harus jalan bersih tanpa warning.
 
