@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StockUpdated;
 use App\Http\Requests\BuyProductRequest;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -55,7 +57,7 @@ class ProductController extends Controller
         if ($bought) {
             // buy() sudah commit (transaction-nya berdiri sendiri di sini) →
             // baru sekarang aman untuk broadcast stok berubah.
-            event(new \App\Events\StockUpdated($product));
+            event(new StockUpdated($product));
         }
 
         return $bought
@@ -68,7 +70,7 @@ class ProductController extends Controller
      * store() → path random (hash nama), NAMA FILE USER TIDAK PERNAH
      * dipakai langsung — cegah path traversal / overwrite file sembarangan.
      */
-    public function uploadImage(\Illuminate\Http\Request $request, Product $product): RedirectResponse
+    public function uploadImage(Request $request, Product $product): RedirectResponse
     {
         $validated = $request->validate([
             'image' => ['required', 'image', 'max:2048'], // tipe + batas 2MB

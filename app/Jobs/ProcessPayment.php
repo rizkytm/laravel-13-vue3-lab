@@ -27,9 +27,7 @@ class ProcessPayment implements ShouldQueue
     /** Jeda antar retry (detik): 10s, 30s, 60s — backoff naik biar gak menumpuk */
     public array $backoff = [10, 30, 60];
 
-    public function __construct(public Order $order)
-    {
-    }
+    public function __construct(public Order $order) {}
 
     public function handle(PaymentGateway $gateway): void
     {

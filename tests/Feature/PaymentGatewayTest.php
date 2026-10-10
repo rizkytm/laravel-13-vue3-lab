@@ -4,6 +4,7 @@ use App\Services\Payment\FakePaymentGateway;
 use App\Services\Payment\HttpPaymentGateway;
 use App\Services\Payment\PaymentGateway;
 use Illuminate\Http\Client\Request;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 // Driver gateway: fake (default) vs http — dipilih lewat config, bukan kode.
@@ -27,7 +28,7 @@ it('throws when gateway responds with error', function () {
 
     // throw() → jangan kembalikan "sukses" palsu saat provider gagal
     expect(fn () => (new HttpPaymentGateway)->charge(1000))
-        ->toThrow(\Illuminate\Http\Client\RequestException::class);
+        ->toThrow(RequestException::class);
 });
 
 it('binds PaymentGateway to HttpPaymentGateway when driver=http', function () {

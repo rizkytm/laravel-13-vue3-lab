@@ -12,9 +12,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
  */
 class StockAvailable implements ValidationRule
 {
-    public function __construct(private readonly Product $product)
-    {
-    }
+    public function __construct(private readonly Product $product) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
 it('shows login form', function () {
     $this->get('/login')->assertOk()->assertSee('Login');

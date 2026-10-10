@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,14 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Append ke web group: jalan SESUDAH StartSession (butuh session
         // untuk persist pilihan locale), SEBELUM controller.
         $middleware->web(append: [
-            \App\Http\Middleware\SetLocale::class,
-            \App\Http\Middleware\AssignRequestId::class,
+            SetLocale::class,
+            AssignRequestId::class,
         ]);
         // Sanctum SPA auth: request dari domain stateful (Vite dev :5173)
         // di-wrap dengan session middleware → /api/* bisa auth via cookie
         // session, bukan hanya Bearer token.
-        $middleware->api(prepend: [\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class]);
-        $middleware->api(append: [\App\Http\Middleware\AssignRequestId::class]);
+        $middleware->api(prepend: [EnsureFrontendRequestsAreStateful::class]);
+        $middleware->api(append: [AssignRequestId::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
@@ -38,7 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // 404 bawaan membocorkan nama model internal
         // ("No query results for model [App\Models\Product] 999") → ganti
         // pesan konsisten tanpa info internal.
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
+        $exceptions->render(function (HttpException $e, Request $request) {
             if (! $request->is('api/*')) {
                 return null; // biarkan handler default (web/HTML) yang proses
             }

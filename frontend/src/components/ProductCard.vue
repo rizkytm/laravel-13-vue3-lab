@@ -15,7 +15,11 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="card" data-testid="product-card" @click="emit('open', props.product)">
+  <div
+    class="card"
+    data-testid="product-card"
+    @click="emit('open', props.product)"
+  >
     <strong>{{ product.name }}</strong>
     — Rp {{ product.price.toLocaleString('id-ID') }}
     <small>(stok: {{ product.stock }})</small>

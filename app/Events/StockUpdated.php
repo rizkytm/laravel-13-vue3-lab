@@ -15,9 +15,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
  */
 class StockUpdated implements ShouldBroadcast
 {
-    public function __construct(public Product $product)
-    {
-    }
+    public function __construct(public Product $product) {}
 
     public function broadcastOn(): array
     {

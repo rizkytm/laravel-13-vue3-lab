@@ -16,9 +16,7 @@ class OrderConfirmation extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public function __construct(public Order $order)
-    {
-    }
+    public function __construct(public Order $order) {}
 
     /**
      * Daftar channel. Tambah channel baru (slack, sms) = tambah method
@@ -34,7 +32,7 @@ class OrderConfirmation extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("Order #{$this->order->id} diterima")
             ->greeting("Halo {$notifiable->name}!")
-            ->line("Total: Rp ".number_format($this->order->total, 0, ',', '.'))
+            ->line('Total: Rp '.number_format($this->order->total, 0, ',', '.'))
             ->line('Status: menunggu pembayaran')
             ->action('Lihat order', url("/orders/{$this->order->id}"))
             ->line('Email ini dikirim otomatis oleh Laravel 13 Lab.');

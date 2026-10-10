@@ -37,10 +37,19 @@ function open(product: Product): void {
     placeholder="Cari produk…"
   >
 
-  <p v-if="loading">Memuat…</p>
-  <p v-else-if="error" class="err">{{ error }}</p>
+  <p v-if="loading">
+    Memuat…
+  </p>
+  <p
+    v-else-if="error"
+    class="err"
+  >
+    {{ error }}
+  </p>
 
-  <p v-else-if="filtered.length === 0">Tidak ada produk cocok.</p>
+  <p v-else-if="filtered.length === 0">
+    Tidak ada produk cocok.
+  </p>
 
   <ProductCard
     v-for="product in filtered"

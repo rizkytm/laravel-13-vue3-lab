@@ -41,10 +41,19 @@ function addToCart(): void {
 </script>
 
 <template>
-  <button @click="back">← Kembali</button>
+  <button @click="back">
+    ← Kembali
+  </button>
 
-  <p v-if="loading">Memuat…</p>
-  <p v-else-if="error" class="err">{{ error }}</p>
+  <p v-if="loading">
+    Memuat…
+  </p>
+  <p
+    v-else-if="error"
+    class="err"
+  >
+    {{ error }}
+  </p>
 
   <template v-else-if="product">
     <h1>{{ product.name }}</h1>

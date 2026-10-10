@@ -41,17 +41,25 @@ function onQtyChange(productId: number, event: Event): void {
 <template>
   <h1>Keranjang</h1>
 
-  <p v-if="cart.items.length === 0">Keranjang kosong.</p>
+  <p v-if="cart.items.length === 0">
+    Keranjang kosong.
+  </p>
 
-  <table v-else data-testid="cart-table">
+  <table
+    v-else
+    data-testid="cart-table"
+  >
     <tr>
       <th>Produk</th>
       <th>Harga</th>
       <th>Qty</th>
       <th>Subtotal</th>
-      <th></th>
+      <th />
     </tr>
-    <tr v-for="item in cart.items" :key="item.product_id">
+    <tr
+      v-for="item in cart.items"
+      :key="item.product_id"
+    >
       <td>{{ item.name }}</td>
       <td>Rp {{ item.price.toLocaleString('id-ID') }}</td>
       <td>
@@ -65,19 +73,31 @@ function onQtyChange(productId: number, event: Event): void {
       </td>
       <td>Rp {{ (item.price * item.quantity).toLocaleString('id-ID') }}</td>
       <td>
-        <button :data-testid="`remove-${item.product_id}`" @click="cart.remove(item.product_id)">
+        <button
+          :data-testid="`remove-${item.product_id}`"
+          @click="cart.remove(item.product_id)"
+        >
           Hapus
         </button>
       </td>
     </tr>
     <tr>
-      <th colspan="3">Total</th>
-      <th colspan="2">Rp {{ cart.total.toLocaleString('id-ID') }}</th>
+      <th colspan="3">
+        Total
+      </th>
+      <th colspan="2">
+        Rp {{ cart.total.toLocaleString('id-ID') }}
+      </th>
     </tr>
   </table>
 
   <p v-if="cart.items.length">
-    <button data-testid="clear-cart" @click="cart.clear()">Kosongkan</button>
+    <button
+      data-testid="clear-cart"
+      @click="cart.clear()"
+    >
+      Kosongkan
+    </button>
     <button
       data-testid="checkout"
       :disabled="loading"
@@ -88,5 +108,11 @@ function onQtyChange(productId: number, event: Event): void {
   </p>
 
   <!-- Error dari Laravel (validasi stok, 401, dll) -->
-  <p v-if="error" class="err" data-testid="checkout-error">{{ error.message }}</p>
+  <p
+    v-if="error"
+    class="err"
+    data-testid="checkout-error"
+  >
+    {{ error.message }}
+  </p>
 </template>

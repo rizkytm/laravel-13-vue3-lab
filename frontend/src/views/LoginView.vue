@@ -28,12 +28,24 @@ async function submit(): Promise<void> {
 
 <template>
   <h1>Login</h1>
-  <p class="err">{{ error }}</p>
+  <p class="err">
+    {{ error }}
+  </p>
 
   <form @submit.prevent="submit">
-    <label>Email <input v-model="email" type="email" required></label>
-    <label>Password <input v-model="password" type="password" required></label>
-    <button type="submit">Masuk</button>
+    <label>Email <input
+      v-model="email"
+      type="email"
+      required
+    ></label>
+    <label>Password <input
+      v-model="password"
+      type="password"
+      required
+    ></label>
+    <button type="submit">
+      Masuk
+    </button>
   </form>
 
   <p><small>Demo: test@example.com / password</small></p>

@@ -54,8 +54,11 @@ Reminder aksi (belum dikerjakan):
   (penjelasan per fitur: cara kerja, cara pakai, lokasi kode — dari isi PROGRESS,
   AUDIT, dan README yang sudah ada).
 - ~~Ingatkan untuk push ke repo baru~~ — SELESAI: https://github.com/rizkytm/laravel-13-vue3-lab (public)
-- Ingatkan untuk membuatkan GitHub Actions (CI: jalankan `php artisan test` +
-  `npm test` di setiap push).
+- ~~Ingatkan untuk membuatkan GitHub Actions (CI)~~ — SELESAI: `.github/workflows/ci.yml`
+  (path-filtered backend: pint + 94 PHP test + composer audit; frontend: eslint +
+  vue-tsc + 35 Vitest + npm audit critical) + `.github/dependabot.yml` (weekly)
+- Ingatkan untuk menjalankan `npm audit fix` (root & `frontend/`) — jalankan saat
+  advisories masuk, cek dulu perubahan breaking sebelum commit.
 - Ingatkan untuk gunakan Tailwind CSS untuk styling frontend (ganti style
   inline/CSS biasa di App.vue & view yang ada sekarang).
 - Ingatkan untuk mengetes seluruh fitur secara manual end-to-end (browser +

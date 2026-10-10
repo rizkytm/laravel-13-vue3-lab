@@ -17,16 +17,31 @@ onMounted(load)
 <template>
   <h1>Pesanan Saya</h1>
 
-  <button :disabled="loading" @click="load">
+  <button
+    :disabled="loading"
+    @click="load"
+  >
     {{ loading ? 'Memuat…' : 'Muat ulang' }}
   </button>
 
-  <p v-if="error" class="err">{{ error.message }}</p>
-  <p v-else-if="loading && !data">Memuat…</p>
+  <p
+    v-if="error"
+    class="err"
+  >
+    {{ error.message }}
+  </p>
+  <p v-else-if="loading && !data">
+    Memuat…
+  </p>
 
-  <p v-else-if="data && data.data.length === 0">Belum ada pesanan.</p>
+  <p v-else-if="data && data.data.length === 0">
+    Belum ada pesanan.
+  </p>
 
-  <table v-else-if="data" data-testid="orders-table">
+  <table
+    v-else-if="data"
+    data-testid="orders-table"
+  >
     <tr>
       <th>#</th>
       <th>Status</th>
@@ -34,10 +49,15 @@ onMounted(load)
       <th>Item</th>
       <th>Transaction</th>
     </tr>
-    <tr v-for="order in data.data" :key="order.id">
+    <tr
+      v-for="order in data.data"
+      :key="order.id"
+    >
       <td>{{ order.id }}</td>
       <!-- 'pending' → 'paid' setelah queue worker memproses (M5) -->
-      <td data-testid="order-status">{{ order.status }}</td>
+      <td data-testid="order-status">
+        {{ order.status }}
+      </td>
       <td>Rp {{ order.total.toLocaleString('id-ID') }}</td>
       <td>{{ order.items_count ?? order.items?.length ?? 0 }}</td>
       <td>{{ order.transaction_id || '—' }}</td>

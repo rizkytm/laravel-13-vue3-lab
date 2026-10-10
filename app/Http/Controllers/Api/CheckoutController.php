@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\OrderStatus;
 use App\Events\OrderPlaced;
+use App\Events\StockUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutRequest;
 use App\Http\Resources\OrderResource;
@@ -76,7 +77,7 @@ class CheckoutController extends Controller
         // Broadcast stok juga di sini: kalau transaksi rollback, product
         // di $touchedProducts tidak pernah di-broadcast (stok aslinya juga gak berubah).
         foreach ($touchedProducts as $product) {
-            event(new \App\Events\StockUpdated($product));
+            event(new StockUpdated($product));
         }
         event(new OrderPlaced($order));
         ProcessPayment::dispatch($order);

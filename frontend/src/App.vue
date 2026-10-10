@@ -26,16 +26,27 @@ async function logout(): Promise<void> {
   <nav>
     <strong>{{ config.appName }}</strong>
     <template v-if="auth.user">
-      <router-link to="/">Produk</router-link>
+      <router-link to="/">
+        Produk
+      </router-link>
       <!-- Badge langsung reaktif: cart.count berubah → render ulang otomatis -->
       <router-link :to="{ name: 'cart' }">
         Keranjang ({{ cart.count }}) — Rp {{ cart.total.toLocaleString('id-ID') }}
       </router-link>
-      <router-link :to="{ name: 'orders' }">Pesanan</router-link>
+      <router-link :to="{ name: 'orders' }">
+        Pesanan
+      </router-link>
       <span>{{ auth.user.name }}</span>
-      <button @click="logout">Logout</button>
+      <button @click="logout">
+        Logout
+      </button>
     </template>
-    <router-link v-else to="/login">Login</router-link>
+    <router-link
+      v-else
+      to="/login"
+    >
+      Login
+    </router-link>
   </nav>
 
   <router-view />

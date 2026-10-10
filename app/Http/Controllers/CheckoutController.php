@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Orders\OrderSummary;
 use App\Services\Payment\PaymentGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class CheckoutController extends Controller
         ];
 
         return view('checkout', [
-            'summary' => app(\App\Services\Orders\OrderSummary::class)->make($sampleOrders),
+            'summary' => app(OrderSummary::class)->make($sampleOrders),
         ]);
     }
 

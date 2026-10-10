@@ -1,12 +1,11 @@
 <?php
 
-use App\Events\OrderPlaced;
 use App\Jobs\ProcessPayment;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use App\Notifications\OrderConfirmation;
-use App\Services\Payment\PaymentGateway;
+use Illuminate\Notifications\SendQueuedNotifications;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 
 it('requires token (401 for guest)', function () {
@@ -33,7 +32,7 @@ it('rejects invalid product id (exists rule)', function () {
 });
 
 it('creates order, decrements stock, queues payment (M5 async)', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
 
     $user = User::factory()->create();
     $p1 = Product::factory()->create(['price' => 10000, 'stock' => 5]);
@@ -62,14 +61,14 @@ it('creates order, decrements stock, queues payment (M5 async)', function () {
         ->and($order->user_id)->toBe($user->id);
 
     // Payment masuk queue, bukan jalan di request
-    \Illuminate\Support\Facades\Queue::assertPushed(
+    Queue::assertPushed(
         ProcessPayment::class,
         fn (ProcessPayment $job) => $job->order->is($order)
     );
 });
 
 it('fires OrderPlaced event on successful checkout', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
     $user = User::factory()->create();
     $product = Product::factory()->create(['stock' => 5]);
     Sanctum::actingAs($user);
@@ -79,11 +78,11 @@ it('fires OrderPlaced event on successful checkout', function () {
     ])->assertCreated();
 
     // Listener sudah jalan (event discovery) → notification ikut ter-queue
-    \Illuminate\Support\Facades\Queue::assertPushed(\Illuminate\Notifications\SendQueuedNotifications::class);
+    Queue::assertPushed(SendQueuedNotifications::class);
 });
 
 it('rolls back whole order when any item has insufficient stock', function () {
-    \Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
 
     $user = User::factory()->create();
     $ok = Product::factory()->create(['price' => 10000, 'stock' => 5]);
@@ -101,5 +100,5 @@ it('rolls back whole order when any item has insufficient stock', function () {
         ->and($ok->fresh()->stock)->toBe(5);           // pengurangan pertama dibatalkan
 
     // Event/job tidak pernah sampai di-dispatch — gak ada charge tanpa order
-    \Illuminate\Support\Facades\Queue::assertNothingPushed();
+    Queue::assertNothingPushed();
 });
