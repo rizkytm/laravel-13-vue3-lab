@@ -86,3 +86,4 @@ Composition API, Pinia, Vue Router, Vitest — then a TypeScript migration.
 
 - [`PROGRESS.md`](PROGRESS.md) — milestone log, session resume guide, open questions
 - [`AUDIT.md`](AUDIT.md) — code-review checklist mapped against this codebase
+- [`DEBRIEF.md`](DEBRIEF.md) — every milestone's Q&A (architecture, security, async, Vue)

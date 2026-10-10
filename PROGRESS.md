@@ -43,6 +43,9 @@ Run test frontend: `cd frontend && npm test`. Dev: 2 server (`php artisan serve`
 
 Jawab setelah seluruh implementasi selesai (M8 + fase F):
 
+> Semua debrief M1–F3 sudah terkumpul di **`DEBRIEF.md`** — baca ulang sebagai
+> bahan persiapan interview; item di bawah tinggal dikerjakan/dijawab.
+
 - "Bagaimana best practice try catch block / error handling dan logging pada sebuah endpoint?"
 - Saat menjalankan test unit/feature: apakah semua data di-mock, atau jalan di database
   transaction, atau jalan di database khusus testing? (bahas mekanisme RefreshDatabase
