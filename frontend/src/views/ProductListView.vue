@@ -29,32 +29,50 @@ function open(product: Product): void {
 </script>
 
 <template>
-  <h1>Produk</h1>
+  <h1 class="mb-4 text-2xl font-semibold tracking-tight text-ink">
+    Produk
+  </h1>
 
-  <input
-    v-model="search"
-    data-testid="search"
-    placeholder="Cari produk…"
+  <label class="mb-5 block">
+    <span class="sr-only">Cari produk</span>
+    <input
+      v-model="search"
+      data-testid="search"
+      type="search"
+      placeholder="Cari produk…"
+      class="w-full rounded-md border border-line bg-raised px-3 py-2 text-ink placeholder:text-ink-muted focus:border-accent"
+    >
+  </label>
+
+  <p
+    v-if="loading"
+    class="text-ink-muted"
   >
-
-  <p v-if="loading">
     Memuat…
   </p>
   <p
     v-else-if="error"
-    class="err"
+    class="text-danger"
   >
     {{ error }}
   </p>
 
-  <p v-else-if="filtered.length === 0">
+  <p
+    v-else-if="filtered.length === 0"
+    class="py-6 text-center text-ink-muted"
+  >
     Tidak ada produk cocok.
   </p>
 
-  <ProductCard
-    v-for="product in filtered"
-    :key="product.id"
-    :product="product"
-    @open="open"
-  />
+  <div
+    v-else
+    class="border-t border-line"
+  >
+    <ProductCard
+      v-for="product in filtered"
+      :key="product.id"
+      :product="product"
+      @open="open"
+    />
+  </div>
 </template>

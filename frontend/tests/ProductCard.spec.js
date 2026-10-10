@@ -10,7 +10,7 @@ describe('ProductCard', () => {
 
     expect(wrapper.text()).toContain('Kopi Robusta')
     expect(wrapper.text()).toContain('25.000')
-    expect(wrapper.text()).toContain('stok: 5')
+    expect(wrapper.text()).toContain('stok 5')
   })
 
   it('emits open with the product when clicked (event naik ke parent)', async () => {

@@ -27,26 +27,53 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-  <h1>Login</h1>
-  <p class="err">
-    {{ error }}
-  </p>
+  <div class="mx-auto max-w-sm">
+    <h1 class="mb-5 text-2xl font-semibold tracking-tight text-ink">
+      Login
+    </h1>
+    <p
+      v-if="error"
+      class="mb-4 text-danger"
+      role="alert"
+    >
+      {{ error }}
+    </p>
 
-  <form @submit.prevent="submit">
-    <label>Email <input
-      v-model="email"
-      type="email"
-      required
-    ></label>
-    <label>Password <input
-      v-model="password"
-      type="password"
-      required
-    ></label>
-    <button type="submit">
-      Masuk
-    </button>
-  </form>
+    <!-- Label selalu terlihat — placeholder bukan label -->
+    <form
+      class="flex flex-col gap-4"
+      @submit.prevent="submit"
+    >
+      <label class="block text-sm">
+        <span class="mb-1 block text-ink-muted">Email</span>
+        <input
+          v-model="email"
+          type="email"
+          required
+          autocomplete="email"
+          class="w-full rounded-md border border-line bg-raised px-3 py-2 text-base text-ink focus:border-accent"
+        >
+      </label>
+      <label class="block text-sm">
+        <span class="mb-1 block text-ink-muted">Password</span>
+        <input
+          v-model="password"
+          type="password"
+          required
+          autocomplete="current-password"
+          class="w-full rounded-md border border-line bg-raised px-3 py-2 text-base text-ink focus:border-accent"
+        >
+      </label>
+      <button
+        type="submit"
+        class="cursor-pointer rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors duration-150 hover:bg-accent-strong"
+      >
+        Masuk
+      </button>
+    </form>
 
-  <p><small>Demo: test@example.com / password</small></p>
+    <p class="mt-4 text-sm text-ink-muted">
+      Demo: <span class="font-mono">test@example.com</span> / <span class="font-mono">password</span>
+    </p>
+  </div>
 </template>

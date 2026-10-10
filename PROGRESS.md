@@ -59,8 +59,9 @@ Reminder aksi (belum dikerjakan):
   vue-tsc + 35 Vitest + npm audit critical) + `.github/dependabot.yml` (weekly)
 - Ingatkan untuk menjalankan `npm audit fix` (root & `frontend/`) — jalankan saat
   advisories masuk, cek dulu perubahan breaking sebelum commit.
-- Ingatkan untuk gunakan Tailwind CSS untuk styling frontend (ganti style
-  inline/CSS biasa di App.vue & view yang ada sekarang).
+- ~~Ingatkan untuk gunakan Tailwind CSS untuk styling frontend~~ — SELESAI:
+  Tailwind v4 (Vite plugin), token di `src/style.css` (`@theme` OKLCH: warm
+  neutrals + accent terracotta), system font + mono buat ID, semua view restyle.
 - Ingatkan untuk mengetes seluruh fitur secara manual end-to-end (browser +
   curl) guna mencari bug — jalankan semua alur: login, browse, checkout,
   queue, invoice signed, API v1, locale, upload gambar.
