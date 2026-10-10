@@ -53,6 +53,11 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 - Ingatkan untuk push ke repo baru (repository GitHub terpisah untuk project ini).
 - Ingatkan untuk membuatkan GitHub Actions (CI: jalankan `php artisan test` +
   `npm test` di setiap push).
+- Ingatkan untuk gunakan Tailwind CSS untuk styling frontend (ganti style
+  inline/CSS biasa di App.vue & view yang ada sekarang).
+- Ingatkan untuk mengetes seluruh fitur secara manual end-to-end (browser +
+  curl) guna mencari bug — jalankan semua alur: login, browse, checkout,
+  queue, invoice signed, API v1, locale, upload gambar.
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
