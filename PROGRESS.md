@@ -95,8 +95,11 @@ Reminder aksi (belum dikerjakan):
   terdokumentasi di `ISSUES.md` (7 isu, semuanya sudah diperbaiki).
   Langkah berikut: **Playwright** — bug dari ISSUES.md jadi test pertama.
 - E2E automation (keputusan): **Playwright**, bukan Cypress (multi-tab, auto-wait,
-  standar industri). Pasang SETELAH manual pass — bug dari FEATURES.md jadi test
-  pertama. Konfigurasi nanti: `webServer` array (artisan serve + vite), queue sync.
+  standar industri). ~~Pasang SETELAH manual pass~~ — **SELESAI (2026-10-11)**:
+  `frontend/playwright.config.ts` (webServer array: artisan serve + vite,
+  reuse saat dev), 5 test regresi pertama dari bug ISSUES.md (`e2e/auth.spec.ts`,
+  `e2e/products.spec.ts`) — semua hijau. Jalankan: `npm run test:e2e` (precondition
+  DB ter-seed). Tambah test baru dari bug berikutnya, jangan dari skenario sempurna.
 - ~~Ingatkan untuk fix warning yang muncul di `npm run dev`~~ — SELESAI:
   bersih (eslint --fix 62 warning style tadi).
 
