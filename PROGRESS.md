@@ -64,6 +64,21 @@ Reminder aksi (belum dikerjakan):
   6. Markdown mailable — email konfirmasi order lebih rapi
   7. Job batching (`Bus::batch`) + Horizon — dashboard queue
   8. Sanctum token abilities — otorisasi token granular
+  VERIFIKASI terhadap laravel.com/docs/13.x (2026-10-11, katalog ~90 section):
+  8 item di atas valid. Tambahan yang KETEMU dari dokumen asli (belum masuk
+  daftar awal — sebelumnya mengandalkan ingatan):
+  9. **Passwords** (reset password) & **Verification** (email verified) —
+     fitur production-grade yang belum ada sama sekali
+  10. **Context** — baggage per-request (padanan terstruktur request_id kita)
+  11. **Concurrency** — jalankan proses paralel
+  12. **Images** — manipulasi gambar (kita cuma simpan, belum resize/thumbnail)
+  13. **Pulse / Telescope** — observability & monitoring (relevan ke ELK nanti)
+  14. **Socialite / Fortify / Passport** — alternatif auth (Sanctum sudah pas)
+  15. **Sail / Octane / Reverb** — infra & performa (Sail relevan ke fase Docker)
+  16. **Boost / AI / MCP** — tooling AI agent resmi Laravel — cocok dengan
+      roadmap poin 7 (AI Engineering)
+  17. Ada section **"search"** terpisah dari Scout di docs 13.x — cek isinya
+      saat mengerjakan search server-side
 - ~~Ingatkan untuk membuatkan docs mengenai fitur-fitur~~ — SELESAI: **`FEATURES.md`**
   (per fitur: cara kerja, lokasi kode, langkah tes manual + expected — sekaligus
   checklist tes manual E2E section A–F).
