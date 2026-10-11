@@ -15,6 +15,7 @@
 {{-- Halaman ini tanpa login — dilindungi signature URL (middleware 'signed') --}}
 <p>
     Pelanggan: {{ $order->user->name }}<br>
+    Telepon: {{ $order->user->phone }}<br>
     Tanggal: {{ $order->created_at->isoFormat('D MMMM YYYY') }}<br>
     Status: {{ $order->status->value }}
 </p>

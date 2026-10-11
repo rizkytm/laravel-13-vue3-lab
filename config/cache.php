@@ -2,6 +2,7 @@
 
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 
 return [
@@ -146,6 +147,7 @@ return [
     'serializable_classes' => [
         Collection::class,
         Product::class,
+        LengthAwarePaginator::class,
     ],
 
 ];

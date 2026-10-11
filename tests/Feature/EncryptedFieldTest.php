@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 // Encrypted cast: plaintext di aplikasi, ciphertext di database.
 
@@ -19,12 +20,12 @@ it('stores phone as ciphertext but reads it back decrypted', function () {
     expect(User::find($user->id)->phone)->toBe('081234567890');
 });
 
-it('decrypts phone when shown on order page', function () {
+it('decrypts phone when shown on invoice page', function () {
     $user = User::factory()->create(['phone' => '0812999888777']);
     $order = Order::factory()->for($user)->create();
 
-    $this->actingAs($user)
-        ->get("/orders/{$order->id}")
-        ->assertOk()
-        ->assertSee('0812999888777');
+    // Halaman invoice (signed URL) — decrypt terjadi otomatis saat render
+    $url = URL::temporarySignedRoute('orders.invoice', now()->addMinutes(5), $order);
+
+    $this->get($url)->assertOk()->assertSee('0812999888777');
 });

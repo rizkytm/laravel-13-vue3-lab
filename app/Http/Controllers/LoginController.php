@@ -30,7 +30,9 @@ class LoginController extends Controller
         // id lama (yang mungkin diketahui penyerang) jadi tidak berlaku
         $request->session()->regenerate();
 
-        return redirect()->intended(route('orders.index'));
+        // Setelah login web → ke SPA (session dibagi lintas port localhost).
+        // SPA sendiri mengabaikan redirect ini (fetch redirect:'manual').
+        return redirect()->intended(config('app.spa_url'));
     }
 
     /**

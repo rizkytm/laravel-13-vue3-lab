@@ -21,7 +21,8 @@ export default defineConfig({
     {
       command: 'php artisan serve --port=8000',
       cwd: '..',
-      url: 'http://127.0.0.1:8000',
+      // '/' sengaja tidak ada lagi (halaman web dibersihkan) — check pakai /login
+      url: 'http://127.0.0.1:8000/login',
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

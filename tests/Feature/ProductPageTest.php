@@ -2,15 +2,6 @@
 
 use App\Models\Product;
 
-it('lists products with accessor and count', function () {
-    $product = Product::factory()->create(['name' => 'Sepatu Lari Pro']);
-
-    $this->get('/products')
-        ->assertOk()
-        ->assertSee('Sepatu Lari Pro')
-        ->assertSee('Rp '); // accessor ter-render
-});
-
 it('shows product detail by slug', function () {
     $product = Product::factory()->create();
 

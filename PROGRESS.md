@@ -48,8 +48,22 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 > (Terjawab)" di `DEBRIEF.md` — tinggal reminder aksi di bawah.
 
 Reminder aksi (belum dikerjakan):
-- Ingatkan Rizky untuk cek ulang docs Laravel (laravel.com/docs) — cari hal-hal yang
-  mungkin belum terimplementasi di project ini (mis. fitur yang belum tersentuh milestone).
+- ~~Ingatkan Rizky untuk cek ulang docs Laravel~~ — SELESAI (2026-10-11).
+  Sudah dipakai: Eloquent (casts incl. encrypted, events, factories, relations,
+  scopes, accessor), Query Builder, Collections, Container/DI, Middleware
+  custom, Form Requests, API Resources (when/whenLoaded), Policies+Gate,
+  Events+Listeners, Queues, Notifications, Scheduler, Storage privat, custom
+  validation rule, Rate limiting, Localization, Signed URL, Sanctum
+  (token+SPA), Broadcasting, Http client, Cache, structured logging,
+  cursor + offset pagination. Belum dipakai & layak dicoba di project ini:
+  1. Strict mode Eloquent (`Model::preventLazyLoading()`) — cegah N+1 otomatis
+  2. Laravel Scout — search server-side (menutup catatan pencarian client-side)
+  3. Pennant — feature flag untuk rollout fitur production-grade
+  4. Precognition — validasi form SPA dari validator Laravel
+  5. Blade components (`<x-…>`) — merapikan sisa blade (login/invoice/show)
+  6. Markdown mailable — email konfirmasi order lebih rapi
+  7. Job batching (`Bus::batch`) + Horizon — dashboard queue
+  8. Sanctum token abilities — otorisasi token granular
 - ~~Ingatkan untuk membuatkan docs mengenai fitur-fitur~~ — SELESAI: **`FEATURES.md`**
   (per fitur: cara kerja, lokasi kode, langkah tes manual + expected — sekaligus
   checklist tes manual E2E section A–F).
@@ -66,9 +80,16 @@ Reminder aksi (belum dikerjakan):
 - Ingatkan untuk **melengkapi fitur e-commerce production grade** (mis. payment
   gateway real, stok realtime, keranjang server-side, order status machine,
   refund, inventory movement, dst — scope dulu sebelum dikerjakan).
-- Ingatkan untuk **menghapus halaman web blade yang tidak perlu** (checkout,
-  products index/show, dll yang sudah terhandle Vue 3 + API) — sisakan yang
-  masih dipakai demo fitur framework (upload form, invoice signed, login web).
+- ~~Ingatkan untuk **menghapus halaman web blade yang tidak perlu**~~ —
+  SELESAI (2026-10-11): dihapus — checkout blade + web CheckoutController,
+  `products/index`, `orders/index`, `orders/show`, `welcome`, `ExampleTest`,
+  `CheckoutTest`. Disisakan demo fitur framework: `auth/login` (session auth,
+  dipakai SPA), `products/show` (demo beli lockForUpdate + upload disk
+  privat), `orders/invoice` (signed URL + Carbon locale + encrypted phone).
+  Cache demo pindah ke API products (cache-versioning) — regression
+  `serializable_classes` tetap terjaga. Test: 92 PHP (dari 98) semua hijau —
+  LocaleTest/OrdersPageTest/OrderPolicyTest/SpaAuthTest/SignedUrlTest/
+  EncryptedFieldTest/StructuredLogTest/SeederTest disesuaikan.
 - ~~Ingatkan untuk implementasi **link invoice signed di Vue 3**~~ — SELESAI
   (2026-10-11): `OrderDetailView.vue` (`/orders/:id`) + `invoice_url` di
   `OrderResource` (temporarySignedRoute 30 menit) + link dari tabel Pesanan.

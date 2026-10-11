@@ -7,6 +7,7 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
@@ -15,6 +16,10 @@ class ProductController extends Controller
      * Cocok untuk list statis dengan nomor halaman yang bisa di-share.
      * ?sort=name|price|created_at & ?dir=asc|desc — whitelist, bukan input mentah
      * (kolom di-queryBuilder HARUS dari daftar izin → cegah SQL injection).
+     *
+     * Cache::remember per bentuk request (page/sort/dir) — key menyertakan
+     * VERSION STAMP: model event menaikkan 'products.version' → key lama
+     * kelewat sendiri tanpa perlu hafal setiap variasi key.
      */
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -25,11 +30,14 @@ class ProductController extends Controller
             : 'created_at';
         $dir = $request->query('dir') === 'asc' ? 'asc' : 'desc';
 
-        $products = Product::query()
+        $version = Cache::rememberForever('products.version', fn () => 1);
+        $key = "products.index.v{$version}.".md5($request->fullUrl());
+
+        $products = Cache::remember($key, 300, fn () => Product::query()
             ->withCount('orderItems')
             ->orderBy($sort, $dir)
             ->orderBy('id') // tie-breaker → urutan stabil antar halaman
-            ->paginate($perPage);
+            ->paginate($perPage));
 
         return ProductResource::collection($products);
     }

@@ -37,7 +37,7 @@ it('attaches request id context and logs structured checkout', function () {
 it('generates request id when client does not send one', function () {
     Log::spy();
 
-    $this->get('/products');
+    $this->get('/login');
 
     Log::shouldHaveReceived('withContext')
         ->withArgs(fn (array $context) => isset($context['request_id']) && $context['request_id'] !== '')
@@ -45,7 +45,7 @@ it('generates request id when client does not send one', function () {
 });
 
 it('returns request id in response header for tracing', function () {
-    $this->get('/products')
+    $this->get('/login')
         ->assertOk()
         ->assertHeader('X-Request-Id');
 });

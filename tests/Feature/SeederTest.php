@@ -18,8 +18,8 @@ it('boots from seed data and serves main pages', function () {
         ->and(Order::count())->toBe(5)
         ->and(OrderItem::count())->toBeGreaterThan(0); // 1-3 item per order
 
-    $this->get('/')->assertOk();
-    $this->get('/products')
+    $this->get('/login')->assertOk();
+    $this->get('/products/'.Product::first()->slug)
         ->assertOk()
-        ->assertSee(Product::first()->name); // cache miss pertama → query ke DB
+        ->assertSee(Product::first()->name);
 });

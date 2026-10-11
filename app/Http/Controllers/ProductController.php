@@ -7,34 +7,14 @@ use App\Http\Requests\BuyProductRequest;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProductController extends Controller
 {
     /**
-     * Daftar produk.
-     * withCount('orderItems') → subquery COUNT, bukan hitung per baris di PHP.
-     *
-     * Cache::remember: hasil query di-cache 5 menit. Invalidation ada di
-     * model event Product::saved/deleted — kalau lupa, halaman basi.
-     */
-    public function index(): View
-    {
-        $products = Cache::remember('products.index', 300, function () {
-            return Product::query()
-                ->withCount('orderItems')
-                ->latest()
-                ->get();
-        });
-
-        return view('products.index', compact('products'));
-    }
-
-    /**
-     * Detail produk. Implicit binding {product:slug} → 404 otomatis kalau slug salah,
-     * tanpa findOrFail manual.
+     * Halaman demo produk: beli (lockForUpdate) + upload gambar (disk privat).
+     * Daftar produk & detail untuk user ditangani SPA + API v1.
      */
     public function show(Product $product): View
     {

@@ -12,7 +12,7 @@
 </head>
 <body>
 <h1>{{ $product->name }}</h1>
-<nav><a href="/products">← Semua produk</a><a href="/orders">Orders</a></nav>
+<p><em>Demo fitur framework: beli (lockForUpdate) + upload gambar (disk privat).</em></p>
 
 @if (session('success')) <p class="ok">{{ session('success') }}</p> @endif
 @if (session('error')) <p class="err">{{ session('error') }}</p> @endif

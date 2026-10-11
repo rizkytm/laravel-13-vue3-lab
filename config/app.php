@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | SPA URL
+    |--------------------------------------------------------------------------
+    |
+    | URL frontend Vue 3 — target redirect setelah login web. Di development
+    | SPA berjalan di Vite (:5173); session cookie dibagi lintas port localhost.
+    |
+    */
+
+    'spa_url' => env('SPA_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

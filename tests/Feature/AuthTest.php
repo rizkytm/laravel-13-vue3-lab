@@ -6,11 +6,11 @@ it('shows login form', function () {
     $this->get('/login')->assertOk()->assertSee('Login');
 });
 
-it('logs in with valid credentials and lands on own orders', function () {
+it('logs in with valid credentials and redirects to SPA', function () {
     $user = User::factory()->create(); // password bawaan factory: "password"
 
     $this->post('/login', ['email' => $user->email, 'password' => 'password'])
-        ->assertRedirect(route('orders.index'));
+        ->assertRedirect(config('app.spa_url'));
 
     $this->assertAuthenticatedAs($user);
 });
@@ -24,8 +24,8 @@ it('rejects invalid credentials', function () {
     $this->assertGuest();
 });
 
-it('redirects guest away from protected orders page', function () {
-    $this->get('/orders')->assertRedirect(route('login'));
+it('redirects guest away from protected logout (auth middleware)', function () {
+    $this->post('/logout')->assertRedirect(route('login'));
 });
 
 it('logs out and invalidates session', function () {

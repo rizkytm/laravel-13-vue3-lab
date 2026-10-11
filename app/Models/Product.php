@@ -43,10 +43,12 @@ class Product extends Model
             $product->slug ??= Str::slug($product->name).'-'.Str::lower(Str::random(4));
         });
 
-        // Cache invalidation: produk berubah (save/delete) → lupakan cache list.
-        // Tanpa ini, halaman produk menyajikan data basi selama TTL-nya habis.
-        static::saved(fn (Product $product) => Cache::forget('products.index'));
-        static::deleted(fn (Product $product) => Cache::forget('products.index'));
+        // Cache invalidation via VERSION STAMP: key cache menyertakan versi,
+        // save/delete menaikkan versi → semua key lama otomatis kelewat
+        // (expired alami) tanpa perlu tahu key persisnya (query param bebas).
+        $bumpCacheVersion = fn () => Cache::forever('products.version', (int) Cache::get('products.version', 1) + 1);
+        static::saved($bumpCacheVersion);
+        static::deleted($bumpCacheVersion);
     }
 
     /**

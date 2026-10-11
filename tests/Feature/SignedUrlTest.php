@@ -3,6 +3,7 @@
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\URL;
+use Laravel\Sanctum\Sanctum;
 
 // Signed URL: otorisasi tanpa login via signature HMAC + expiry.
 
@@ -36,12 +37,17 @@ it('rejects expired link (403)', function () {
     $this->get($url)->assertForbidden();
 });
 
-it('generates signed link from order detail page', function () {
+it('generates signed link via api order detail (invoice_url)', function () {
     $user = User::factory()->create();
     $order = Order::factory()->for($user)->create();
+    Sanctum::actingAs($user);
 
-    $this->actingAs($user)
-        ->get("/orders/{$order->id}")
+    $url = $this->getJson("/api/v1/orders/{$order->id}")
         ->assertOk()
-        ->assertSee('signed', false); // teks anchor "signed URL"
+        ->json('data.invoice_url');
+
+    expect($url)->toContain('signature=');
+
+    // Link yang dihasilkan benar-benar bisa dibuka (guest, tanpa auth)
+    $this->get($url)->assertOk()->assertSee("Invoice Order #{$order->id}");
 });

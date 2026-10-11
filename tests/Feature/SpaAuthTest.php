@@ -14,7 +14,7 @@ it('authenticates api request via session cookie after login', function () {
     // 2. Login lewat endpoint WEB (session auth)
     $user = User::factory()->create();
     $this->postJson('/login', ['email' => $user->email, 'password' => 'password'])
-        ->assertRedirect(route('orders.index'));
+        ->assertRedirect(config('app.spa_url'));
     $this->assertAuthenticatedAs($user);
 
     // 3. Request API sekarang ter-auth via session cookie (auth:sanctum
