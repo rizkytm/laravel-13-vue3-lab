@@ -17,7 +17,9 @@ Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => $reques
 // name prefix 'v1.' mencegah tabrakan nama route dengan web
 // (web sudah punya 'products.index', 'orders.index', dst).
 Route::prefix('v1')->name('v1.')->middleware('auth:sanctum')->group(function () {
-    Route::apiResource('products', ProductController::class)->only(['index', 'show']);
+    Route::apiResource('products', ProductController::class)->only(['index', 'show'])
+        // show by slug — konsisten dengan web ({product:slug}) & SPA (route params.slug)
+        ->parameters(['products' => 'product:slug']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
 
     Route::post('checkout', [CheckoutController::class, 'store'])

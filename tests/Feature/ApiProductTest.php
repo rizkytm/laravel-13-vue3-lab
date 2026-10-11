@@ -41,7 +41,7 @@ it('shows single product with count', function () {
     $product = Product::factory()->create();
     Sanctum::actingAs(User::factory()->create());
 
-    $this->getJson("/api/v1/products/{$product->id}")
+    $this->getJson("/api/v1/products/{$product->slug}")
         ->assertOk()
         ->assertJsonPath('data.id', $product->id)
         ->assertJsonPath('data.name', $product->name);
@@ -50,5 +50,5 @@ it('shows single product with count', function () {
 it('returns 404 JSON for unknown product', function () {
     Sanctum::actingAs(User::factory()->create());
 
-    $this->getJson('/api/v1/products/999999')->assertNotFound();
+    $this->getJson('/api/v1/products/tidak-ada')->assertNotFound();
 });

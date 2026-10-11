@@ -26,7 +26,7 @@ class ProductController extends Controller
     }
 
     /**
-     * GET /api/v1/products/{product} — binding by id (bawaan apiResource).
+     * GET /api/v1/products/{product:slug} — binding by slug (route parameter).
      */
     public function show(Product $product): ProductResource
     {
