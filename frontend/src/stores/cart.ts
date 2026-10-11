@@ -21,13 +21,15 @@ export const useCartStore = defineStore('cart', () => {
   function add(product: Product, quantity = 1): void {
     const existing = items.value.find((i) => i.product_id === product.id)
     if (existing) {
-      existing.quantity += quantity
+      // Clamp ke stok — qty tidak boleh melebihi yang tersedia
+      existing.quantity = Math.min(existing.quantity + quantity, product.stock)
     } else {
       items.value.push({
         product_id: product.id,
         name: product.name,
         price: product.price,
-        quantity,
+        quantity: Math.min(quantity, product.stock),
+        stock: product.stock,
       })
     }
   }
@@ -38,7 +40,9 @@ export const useCartStore = defineStore('cart', () => {
       return
     }
     const item = items.value.find((i) => i.product_id === productId)
-    if (item) item.quantity = quantity
+    if (item) {
+      item.quantity = Math.min(quantity, item.stock)
+    }
   }
 
   function remove(productId: number): void {

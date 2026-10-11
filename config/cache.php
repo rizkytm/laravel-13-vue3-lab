@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Product;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -131,6 +133,19 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | Default Laravel 13: false — unserialize TANPA kelas apa pun (hardening
+    | object injection). Konsekuensi: menyimpan OBJECT di cache harus
+    | meng-allowlist kelas-nya di sini, atau disimpan sebagai array.
+    |
+    */
+    'serializable_classes' => [
+        Collection::class,
+        Product::class,
+    ],
 
 ];

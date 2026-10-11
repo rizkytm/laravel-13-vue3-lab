@@ -3,8 +3,8 @@ import { nextTick } from 'vue'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useCartStore } from '../src/stores/cart'
 
-const productA = { id: 1, name: 'Kopi', price: 25000 }
-const productB = { id: 2, name: 'Teh', price: 15000 }
+const productA = { id: 1, name: 'Kopi', price: 25000, stock: 10 }
+const productB = { id: 2, name: 'Teh', price: 15000, stock: 10 }
 
 beforeEach(() => {
   setActivePinia(createPinia())
@@ -62,6 +62,20 @@ describe('cart store', () => {
     expect(cart.items).toHaveLength(0)
   })
 
+  it('add & setQuantity di-clamp ke stok (qty tidak boleh melebihi)', () => {
+    const cart = useCartStore()
+    const limited = { id: 3, name: 'Gula', price: 5000, stock: 2 }
+
+    cart.add(limited, 5)
+    expect(cart.items[0].quantity).toBe(2)
+
+    cart.add(limited)
+    expect(cart.items[0].quantity).toBe(2)
+
+    cart.setQuantity(3, 99)
+    expect(cart.items[0].quantity).toBe(2)
+  })
+
   it('persists to localStorage via watch (deep)', async () => {
     const cart = useCartStore()
 
@@ -69,7 +83,7 @@ describe('cart store', () => {
     await nextTick() // watch default flush: 'post' — tunggu render cycle
 
     expect(JSON.parse(localStorage.getItem('lab_cart'))).toEqual([
-      { product_id: 1, name: 'Kopi', price: 25000, quantity: 2 },
+      { product_id: 1, name: 'Kopi', price: 25000, quantity: 2, stock: 10 },
     ])
   })
 

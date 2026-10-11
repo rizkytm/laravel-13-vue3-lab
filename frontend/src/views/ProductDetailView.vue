@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api'
 import { useCartStore } from '../stores/cart'
@@ -16,8 +16,9 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    const res = await api.raw<Product>(`/products/${route.params.slug}`)
-    product.value = res
+    // ProductResource membungkus payload di { data: ... } — harus di-unwrap
+    const res = await api.raw<{ data: Product }>(`/products/${route.params.slug}`)
+    product.value = res.data
   } catch (e) {
     const status = (e as { status?: number }).status
     error.value = status === 404
@@ -34,7 +35,29 @@ function back(): void {
   router.push({ name: 'products' })
 }
 
+// Opsi produk = JSON dinamis → baris label: nilai yang enak dibaca
+const optionLabels: Record<string, string> = {
+  color: 'Warna',
+  weight_gram: 'Berat',
+}
+
+const optionEntries = computed<{ label: string; value: string }[]>(() =>
+  Object.entries(product.value?.options ?? {}).map(([key, raw]) => {
+    const value = typeof raw === 'number'
+      ? raw.toLocaleString('id-ID')
+      : String(raw).replace(/_/g, ' ')
+    return {
+      label: optionLabels[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      value: key.endsWith('_gram') ? `${value} gram` : value,
+    }
+  }),
+)
+
 // Aksi ke store global — badge di App.vue ikut berubah otomatis
+const inCartQty = computed(
+  () => cart.items.find((i) => i.product_id === product.value?.id)?.quantity ?? 0,
+)
+
 function addToCart(): void {
   if (product.value) cart.add(product.value)
 }
@@ -83,18 +106,39 @@ function addToCart(): void {
       <dt class="text-ink-muted">
         Opsi
       </dt>
-      <dd class="font-mono text-xs text-ink">
-        {{ JSON.stringify(product.options) }}
+      <dd class="text-ink">
+        <span
+          v-if="optionEntries.length === 0"
+          class="text-ink-muted"
+        >—</span>
+        <ul
+          v-else
+          class="flex flex-wrap gap-x-4 gap-y-1"
+        >
+          <li
+            v-for="opt in optionEntries"
+            :key="opt.label"
+          >
+            <span class="text-ink-muted">{{ opt.label }}:</span>
+            <span class="font-mono text-xs">{{ opt.value }}</span>
+          </li>
+        </ul>
       </dd>
     </dl>
 
     <button
       data-testid="add-to-cart"
-      :disabled="product.stock < 1"
+      :disabled="product.stock < 1 || inCartQty >= product.stock"
       class="cursor-pointer rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors duration-150 hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-40"
       @click="addToCart"
     >
-      {{ product.stock < 1 ? 'Stok habis' : 'Tambah ke keranjang' }}
+      {{
+        product.stock < 1
+          ? 'Stok habis'
+          : inCartQty >= product.stock
+            ? `Sudah di keranjang (${inCartQty})`
+            : 'Tambah ke keranjang'
+      }}
     </button>
   </template>
 </template>

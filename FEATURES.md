@@ -119,15 +119,31 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 
 ### B5. Upload gambar produk (M6 — disk privat)
 - **Kode:** `ProductController@uploadImage/@image`, route
-  `POST|GET /products/{slug}/image`, `FilesystemAdapter` privat
-- **Langkah (curl):**
+  `POST|GET /products/{slug}/image`, disk privat
+- **Langkah (curl — POST web route butuh token CSRF):**
   ```bash
-  curl -F "image=@/path/foto.jpg" http://127.0.0.1:8000/products/kopi-robusta/image
-  curl -o out.jpg http://127.0.0.1:8000/products/kopi-robusta/image
+  SLUG=$(php artisan tinker --execute='echo App\Models\Product::first()->slug;')
+
+  # 1. ambil session + token dari halaman (form upload ada di products/show)
+  curl -s -c /tmp/j.txt -o /tmp/p.html "http://127.0.0.1:8000/products/$SLUG"
+  TOKEN=$(grep -o 'name="_token" value="[^"]*"' /tmp/p.html | head -1 | sed 's/.*value="//;s/"//')
+
+  # 2. upload (sertakan _token + cookie jar)
+  curl -b /tmp/j.txt -F "_token=$TOKEN" -F "image=@/tmp/tiny.jpg" \
+    -H 'Accept: application/json' "http://127.0.0.1:8000/products/$SLUG/image"
+
+  # 3. download + bukti byte identik
+  curl -o /tmp/out.jpg "http://127.0.0.1:8000/products/$SLUG/image"
+  cmp /tmp/tiny.jpg /tmp/out.jpg && echo IDENTIK
+
+  # 4. negatif: file bukan gambar → ditolak (422)
+  echo "bukan gambar" > /tmp/fake.jpg
+  curl -b /tmp/j.txt -F "_token=$TOKEN" -F "image=@/tmp/fake.jpg" \
+    -H 'Accept: application/json' "http://127.0.0.1:8000/products/$SLUG/image"
   ```
-- **Harpankan:** upload ditolak kalau bukan gambar/lewat ukuran; file masuk
-  `storage/app/private/…`; download = byte identik (`cmp out.jpg foto.jpg`).
-  Akses path fisik langsung via webserver → gak tersedia (privat).
+- **Harpankan:** upload OK + file masuk `storage/app/private/products/` (path
+  random, nama file user diabaikan); download byte identik; file non-gambar
+  → `422`; tanpa token → `419` (CSRF — memang diwajibkan).
 
 ### B6. i18n ?lang=id (M6)
 - **Kode:** `Http/Middleware/SetLocale.php`, `lang/id.json`

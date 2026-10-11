@@ -48,7 +48,7 @@ describe('CartView', () => {
 
   it('renders items from store and updates quantity', async () => {
     const cart = useCartStore()
-    cart.add({ id: 1, name: 'Kopi', price: 25000 }, 2)
+    cart.add({ id: 1, name: 'Kopi', price: 25000, stock: 10 }, 2)
 
     const { wrapper } = await mountCart()
 
@@ -62,7 +62,7 @@ describe('CartView', () => {
 
   it('removes item via store action', async () => {
     const cart = useCartStore()
-    cart.add({ id: 1, name: 'Kopi', price: 25000 })
+    cart.add({ id: 1, name: 'Kopi', price: 25000, stock: 10 })
 
     const { wrapper } = await mountCart()
     await wrapper.get('[data-testid="remove-1"]').trigger('click')
@@ -73,8 +73,8 @@ describe('CartView', () => {
 
   it('checkout posts cart items to api, clears cart, navigates to orders', async () => {
     const cart = useCartStore()
-    cart.add({ id: 1, name: 'Kopi', price: 25000 }, 2)
-    cart.add({ id: 2, name: 'Teh', price: 15000 })
+    cart.add({ id: 1, name: 'Kopi', price: 25000, stock: 10 }, 2)
+    cart.add({ id: 2, name: 'Teh', price: 15000, stock: 10 })
 
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({ data: { id: 9, status: 'pending' }, message: 'ok' }, true, 201),
@@ -101,7 +101,7 @@ describe('CartView', () => {
 
   it('shows backend validation error and keeps cart on failure', async () => {
     const cart = useCartStore()
-    cart.add({ id: 1, name: 'Kopi', price: 25000 }, 5)
+    cart.add({ id: 1, name: 'Kopi', price: 25000, stock: 10 }, 5)
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       jsonResponse({ message: 'Stok tidak mencukupi — tersisa 2.' }, false, 422),

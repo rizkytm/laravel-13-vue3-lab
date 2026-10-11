@@ -91,6 +91,7 @@ function onQtyChange(productId: number, event: Event): void {
           <input
             type="number"
             min="1"
+            :max="item.stock"
             :value="item.quantity"
             :data-testid="`qty-${item.product_id}`"
             class="w-16 rounded border border-line bg-raised px-2 py-1 tabular-nums text-ink focus:border-accent"

@@ -28,3 +28,16 @@ it('invalidates cache when product saved through model', function () {
 
     $this->get('/products')->assertSee('Kopi Baru');
 });
+
+it('cache hit dengan driver database tidak merusak objek (serializable_classes)', function () {
+    // Driver array TIDAK serialize — bug korupsi objek cuma muncul di store
+    // yang serialize (database/file). Paksa database di test ini.
+    config(['cache.default' => 'database']);
+
+    Product::factory()->create(['name' => 'Kopi Uji']);
+
+    $this->get('/products')->assertOk()->assertSee('Kopi Uji');
+
+    // Kedua = cache HIT → unserialize dari cache table → harus tetap objek
+    $this->get('/products')->assertOk()->assertSee('Kopi Uji');
+});

@@ -17,6 +17,8 @@ export interface CartItem {
   name: string
   price: number
   quantity: number
+  /** Snapshot stok saat add — batas qty di cart; server tetap otoritatif saat checkout */
+  stock: number
 }
 
 export interface User {
