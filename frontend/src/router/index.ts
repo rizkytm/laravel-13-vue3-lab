@@ -5,6 +5,7 @@ import ProductDetailView from '../views/ProductDetailView.vue'
 import LoginView from '../views/LoginView.vue'
 import CartView from '../views/CartView.vue'
 import OrdersView from '../views/OrdersView.vue'
+import OrderDetailView from '../views/OrderDetailView.vue'
 import { useAuthStore } from '../stores/auth'
 
 const routes: RouteRecordRaw[] = [
@@ -19,6 +20,14 @@ const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/cart', name: 'cart', component: CartView, meta: { requiresAuth: true } },
   { path: '/orders', name: 'orders', component: OrdersView, meta: { requiresAuth: true } },
+  {
+    path: '/orders/:id',
+    name: 'order-detail',
+    component: OrderDetailView,
+    meta: { requiresAuth: true },
+  },
+  // Catch-all: route tak dikenal → balik ke daftar (jangan halaman kosong)
+  { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
 const router = createRouter({

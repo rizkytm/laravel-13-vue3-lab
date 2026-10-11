@@ -104,3 +104,25 @@ Guest tetap diizinkan; `auth.user` dicek via `/api/user` kalau state belum ada.
 - Red herring berbahaya: 401 bisa muncul di 3 lapis (cookie gak terkirim,
   session gak kebaca, guard menolak) — buktikan lapis per lapis sebelum
   menyimpulkan akar masalah
+
+---
+
+## 6. Link invoice SPA → halaman kosong (2026-10-11)
+
+**Laporan:** klik "Lihat invoice" dari halaman order detail
+(`http://localhost:5173/orders/9/invoice?expires=…&signature=…`) → halaman
+tidak menampilkan apa-apa.
+
+**Akar masalah:** `invoice_url` di-generate lewat proxy Vite → ikut ter-sign
+untuk host `localhost:5173`. Vite meneruskan `/api` `/sanctum` `/login`
+`/logout` saja — path `/orders/*/invoice` jatuh ke SPA fallback
+(`index.html`), dan router SPA tidak punya route itu → kosong.
+
+**Perbaikan:** proxy regex `^/orders/[^/]+/invoice` → backend (Host
+dipertahankan → signature cocok); router SPA dapat catch-all redirect ke `/`;
+e2e `orders.spec.ts` kini benar-benar MENGKLIK link dan memverifikasi heading
+`Invoice Order #…` tampil.
+
+**Pelajaran:** fitur yang menyentuh dua origin (SPA + backend) harus diuji
+sampai halaman tujuan tampil, bukan sampai href-nya benar. E2E yang hanya
+assert atribut href tidak menangkap bug ini.

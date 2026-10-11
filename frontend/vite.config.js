@@ -36,6 +36,10 @@ export default defineConfig(({ mode }) => {
         '/sanctum': { target: backend, changeOrigin: false },
         '/login': { target: backend, changeOrigin: false },
         '/logout': { target: backend, changeOrigin: false },
+        // Invoice signed URL dibuka dari SPA (host :5173, ikut di-sign untuk
+        // host itu) — harus diteruskan ke backend, bukan jatuh ke SPA fallback.
+        // Regex: HANYA /orders/*/invoice — /orders dan /orders/:id tetap SPA.
+        '^/orders/[^/]+/invoice': { target: backend, changeOrigin: false },
       },
     },
     test: {

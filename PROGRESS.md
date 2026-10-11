@@ -69,15 +69,17 @@ Reminder aksi (belum dikerjakan):
 - Ingatkan untuk **menghapus halaman web blade yang tidak perlu** (checkout,
   products index/show, dll yang sudah terhandle Vue 3 + API) — sisakan yang
   masih dipakai demo fitur framework (upload form, invoice signed, login web).
-- Ingatkan untuk implementasi **link invoice signed di Vue 3** (D1 sudah lulus
-  di web blade — SPA butuh halaman order detail + link `temporarySignedRoute`).
+- ~~Ingatkan untuk implementasi **link invoice signed di Vue 3**~~ — SELESAI
+  (2026-10-11): `OrderDetailView.vue` (`/orders/:id`) + `invoice_url` di
+  `OrderResource` (temporarySignedRoute 30 menit) + link dari tabel Pesanan.
+  Test: API (signed link tanpa auth, signature utak-atik → 403), Vue (render
+  items + link, 403, tanpa invoice_url), Playwright (checkout → detail → invoice).
+- ~~Ingatkan untuk buat **halaman order detail** di SPA~~ — SELESAI: lihat di atas.
 - Ingatkan untuk implementasi **i18n di Vue 3** (vue-i18n atau composition
   API `useI18n`) — backend sudah `SetLocale ?lang=` + `lang/id.json`; SPA
   masih Inggris/Indonesia campur.
 - Ingatkan untuk mempelajari best practice dari repo
   https://github.com/joshcirre/larrykonn (bandingkan pola dengan project ini).
-- Ingatkan untuk buat **halaman order detail** di SPA (klik baris di tabel
-  Pesanan → detail: item, status, link invoice signed) — sekarang baru list.
 - Ingatkan untuk implementasi **pagination & sorting untuk produk** (API v1
   `products.index`: cursor pagination + `?sort=` — belum ada; SPA list masih
   `per_page=50` mentah).

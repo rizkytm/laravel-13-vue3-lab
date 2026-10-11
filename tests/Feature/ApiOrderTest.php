@@ -51,7 +51,23 @@ it('shows own order with items via policy', function () {
         ->assertOk()
         ->assertJsonPath('data.id', $order->id)
         ->assertJsonCount(2, 'data.items')
-        ->assertJsonPath('data.items_count', 2);
+        ->assertJsonPath('data.items_count', 2)
+        ->assertJsonStructure(['data' => ['invoice_url']]);
+});
+
+it('invoice_url dari API = signed link, bisa diakses tanpa auth', function () {
+    $user = User::factory()->create();
+    $order = Order::factory()->for($user)->create();
+    Sanctum::actingAs($user);
+
+    $url = $this->getJson("/api/v1/orders/{$order->id}")->json('data.invoice_url');
+    expect($url)->toContain("/orders/{$order->id}/invoice");
+
+    // Tanpa auth — otorisasi = signature valid + belum expired
+    $this->get($url)->assertOk();
+
+    // Signature diutak-atik → ditolak
+    $this->get($url.'&x=1')->assertForbidden();
 });
 
 it('forbids other user from viewing the order (403 JSON)', function () {

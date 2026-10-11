@@ -85,8 +85,14 @@ onMounted(load)
         :key="order.id"
         class="border-b border-line"
       >
-        <td class="py-2.5 pr-3 tabular-nums text-ink-muted">
-          {{ order.id }}
+        <td class="py-2.5 pr-3 tabular-nums">
+          <router-link
+            :to="{ name: 'order-detail', params: { id: order.id } }"
+            data-testid="order-link"
+            class="text-accent no-underline hover:underline"
+          >
+            #{{ order.id }}
+          </router-link>
         </td>
         <!-- 'pending' → 'paid' setelah queue worker memproses (M5) -->
         <td

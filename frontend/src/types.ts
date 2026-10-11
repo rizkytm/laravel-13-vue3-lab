@@ -42,6 +42,8 @@ export interface Order {
   total: number
   transaction_id: string | null
   paid_at: string | null
+  /** Signed URL invoice (30 menit) — digenerate server-side */
+  invoice_url?: string
   items_count?: number
   items?: OrderItem[]
   user?: { id: number; name: string }
