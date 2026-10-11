@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { Product } from '../types'
+
+const { t } = useI18n()
 
 // Props vs emit — kontrak satu arah per komponen:
 // data TURUN lewat props, event NAIK lewat emit.
@@ -30,7 +33,7 @@ const emit = defineEmits<{
       class="w-20 text-right text-sm"
       :class="product.stock < 1 ? 'text-danger' : 'text-ink-muted'"
     >
-      {{ product.stock < 1 ? 'Habis' : `stok ${product.stock}` }}
+      {{ product.stock < 1 ? t('card.out') : t('card.stockValue', { n: product.stock }) }}
     </span>
   </button>
 </template>

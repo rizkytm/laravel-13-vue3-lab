@@ -37,6 +37,32 @@ it('caps per_page to a sane maximum', function () {
         ->assertJsonPath('meta.per_page', 50);
 });
 
+it('sorts by whitelisted column and direction', function () {
+    Product::factory()->create(['name' => 'B', 'price' => 200]);
+    Product::factory()->create(['name' => 'A', 'price' => 100]);
+    Product::factory()->create(['name' => 'C', 'price' => 300]);
+    Sanctum::actingAs(User::factory()->create());
+
+    $prices = $this->getJson('/api/v1/products?sort=price&dir=asc')
+        ->assertOk()
+        ->json('data.*.price');
+    expect($prices)->toBe([100, 200, 300]);
+
+    $names = $this->getJson('/api/v1/products?sort=name&dir=asc')
+        ->assertOk()
+        ->json('data.*.name');
+    expect($names)->toBe(['A', 'B', 'C']);
+});
+
+it('ignores sort param outside whitelist (fallback, bukan 500)', function () {
+    Product::factory()->count(2)->create();
+    Sanctum::actingAs(User::factory()->create());
+
+    $this->getJson('/api/v1/products?sort=DROP%20TABLE&dir=asc')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+});
+
 it('shows single product with count', function () {
     $product = Product::factory()->create();
     Sanctum::actingAs(User::factory()->create());

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const { t } = useI18n()
 
 const email = ref('')
 const password = ref('')
@@ -21,7 +23,7 @@ async function submit(): Promise<void> {
     router.push(typeof redirect === 'string' ? redirect : { name: 'products' })
   } catch (e) {
     error.value = (e as { status?: number }).status === 401
-      ? 'Email atau password salah.'
+      ? t('login.wrong')
       : (e as Error).message
   }
 }
@@ -30,7 +32,7 @@ async function submit(): Promise<void> {
 <template>
   <div class="mx-auto max-w-sm">
     <h1 class="mb-5 text-2xl font-semibold tracking-tight text-ink">
-      Login
+      {{ t('nav.login') }}
     </h1>
     <p
       v-if="error"
@@ -46,7 +48,7 @@ async function submit(): Promise<void> {
       @submit.prevent="submit"
     >
       <label class="block text-sm">
-        <span class="mb-1 block text-ink-muted">Email</span>
+        <span class="mb-1 block text-ink-muted">{{ t('login.email') }}</span>
         <input
           v-model="email"
           type="email"
@@ -56,7 +58,7 @@ async function submit(): Promise<void> {
         >
       </label>
       <label class="block text-sm">
-        <span class="mb-1 block text-ink-muted">Password</span>
+        <span class="mb-1 block text-ink-muted">{{ t('login.password') }}</span>
         <span class="relative block">
           <input
             v-model="password"
@@ -68,7 +70,7 @@ async function submit(): Promise<void> {
           <button
             type="button"
             data-testid="toggle-password"
-            :aria-label="showPassword ? 'Sembunyikan password' : 'Lihat password'"
+            :aria-label="showPassword ? t('login.hidePassword') : t('login.showPassword')"
             class="absolute right-1 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent p-1.5 text-ink-muted hover:text-accent"
             @click="showPassword = !showPassword"
           >
@@ -117,7 +119,7 @@ async function submit(): Promise<void> {
         type="submit"
         class="cursor-pointer rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors duration-150 hover:bg-accent-strong"
       >
-        Masuk
+        {{ t('login.submit') }}
       </button>
     </form>
 

@@ -98,4 +98,51 @@ describe('ProductListView', () => {
 
     expect(router.currentRoute.value.path).toBe('/products/kopi-robusta')
   })
+
+  it('sort select mengirim ?sort=&dir= dan kembali ke halaman 1', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: products }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const router = makeRouter()
+    router.push('/')
+    await router.isReady()
+
+    const wrapper = mount(ProductListView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    await wrapper.get('[data-testid="sort-select"]').setValue('price:asc')
+    await flushPromises()
+
+    expect(fetchMock.mock.calls.at(-1)[0]).toContain('sort=price&dir=asc')
+    expect(fetchMock.mock.calls.at(-1)[0]).toContain('page=1')
+  })
+
+  it('pagination: next/prev memuat halaman sesuai tombol', async () => {
+    const halaman = (n) => ({
+      data: products,
+      meta: { current_page: n, last_page: 3, total: 30, per_page: 12 },
+    })
+    const fetchMock = vi.fn().mockImplementation((url) =>
+      Promise.resolve(jsonResponse(halaman(url.includes('page=2') ? 2 : 1))),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const router = makeRouter()
+    router.push('/')
+    await router.isReady()
+
+    const wrapper = mount(ProductListView, { global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Halaman 1 dari 3')
+
+    await wrapper.get('[data-testid="next-page"]').trigger('click')
+    await flushPromises()
+    expect(fetchMock.mock.calls.at(-1)[0]).toContain('page=2')
+    expect(wrapper.text()).toContain('Halaman 2 dari 3')
+
+    await wrapper.get('[data-testid="prev-page"]').trigger('click')
+    await flushPromises()
+    expect(fetchMock.mock.calls.at(-1)[0]).toContain('page=1')
+  })
 })

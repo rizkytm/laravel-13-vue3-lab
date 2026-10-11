@@ -75,14 +75,18 @@ Reminder aksi (belum dikerjakan):
   Test: API (signed link tanpa auth, signature utak-atik → 403), Vue (render
   items + link, 403, tanpa invoice_url), Playwright (checkout → detail → invoice).
 - ~~Ingatkan untuk buat **halaman order detail** di SPA~~ — SELESAI: lihat di atas.
-- Ingatkan untuk implementasi **i18n di Vue 3** (vue-i18n atau composition
-  API `useI18n`) — backend sudah `SetLocale ?lang=` + `lang/id.json`; SPA
-  masih Inggris/Indonesia campur.
 - Ingatkan untuk mempelajari best practice dari repo
   https://github.com/joshcirre/larrykonn (bandingkan pola dengan project ini).
-- Ingatkan untuk implementasi **pagination & sorting untuk produk** (API v1
-  `products.index`: cursor pagination + `?sort=` — belum ada; SPA list masih
-  `per_page=50` mentah).
+- ~~Ingatkan untuk implementasi **pagination & sorting untuk produk**~~ —
+  SELESAI (2026-10-11): API `?sort=name|price|created_at&dir=` (whitelist,
+  tie-breaker id) + SPA sort select + pagination footer (Prev/Next, "Halaman
+  X dari Y"). Deviasi dari rencana: offset pagination (bukan cursor) — nomor
+  halaman bisa di-share & API sudah pakai `paginate()`. Catatan: pencarian
+  masih client-side per halaman.
+- ~~Ingatkan untuk implementasi **i18n di Vue 3**~~ — SELESAI (2026-10-11):
+  vue-i18n (composition mode) di `src/i18n/index.ts`, locale id/en, switcher
+  ID/EN di header (persist `localStorage`), semua view pakai `t()`. Default
+  'id' → test lama tak berubah. +3 test i18n.
 - Ingatkan untuk **audit project berdasarkan OWASP ASVS**
   (https://github.com/owasp/asvs) — cocok dengan roadmap poin 6 (Security),
   target level L2.

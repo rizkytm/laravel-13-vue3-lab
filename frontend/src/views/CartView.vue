@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { api } from '../api'
 import { useApi } from '../composables/useApi'
 import { useCartStore } from '../stores/cart'
@@ -8,6 +9,7 @@ import type { Order } from '../types'
 // Store = state global tunggal — semua komponen melihat angka yang sama
 const cart = useCartStore()
 const router = useRouter()
+const { t } = useI18n()
 const { loading, error, execute } = useApi<{ data: Order; message: string }>()
 
 /**
@@ -40,14 +42,14 @@ function onQtyChange(productId: number, event: Event): void {
 
 <template>
   <h1 class="mb-4 text-2xl font-semibold tracking-tight text-ink">
-    Keranjang
+    {{ t('cart.title') }}
   </h1>
 
   <p
     v-if="cart.items.length === 0"
     class="py-6 text-center text-ink-muted"
   >
-    Keranjang kosong.
+    {{ t('cart.empty') }}
   </p>
 
   <!-- Artifact: nota/receipt — baris + garis bawah, bukan grid penuh -->
@@ -59,19 +61,19 @@ function onQtyChange(productId: number, event: Event): void {
     <thead>
       <tr class="border-b border-ink-muted text-left text-ink-muted">
         <th class="py-2 pr-3 font-medium">
-          Produk
+          {{ t('common.product') }}
         </th>
         <th class="py-2 pr-3 font-medium">
-          Harga
+          {{ t('common.price') }}
         </th>
         <th class="py-2 pr-3 font-medium">
-          Qty
+          {{ t('common.qty') }}
         </th>
         <th class="py-2 pr-3 font-medium">
-          Subtotal
+          {{ t('common.subtotal') }}
         </th>
         <th class="py-2 font-medium">
-          <span class="sr-only">Aksi</span>
+          <span class="sr-only">{{ t('cart.action') }}</span>
         </th>
       </tr>
     </thead>
@@ -107,7 +109,7 @@ function onQtyChange(productId: number, event: Event): void {
             class="cursor-pointer border-0 bg-transparent p-0 text-sm text-ink-muted hover:text-danger"
             @click="cart.remove(item.product_id)"
           >
-            Hapus
+            {{ t('cart.remove') }}
           </button>
         </td>
       </tr>
@@ -116,7 +118,7 @@ function onQtyChange(productId: number, event: Event): void {
           colspan="3"
           class="py-3 pr-3 text-left font-semibold text-ink"
         >
-          Total
+          {{ t('common.total') }}
         </th>
         <th
           colspan="2"
@@ -137,7 +139,7 @@ function onQtyChange(productId: number, event: Event): void {
       class="cursor-pointer rounded-md border border-line bg-raised px-4 py-2 text-ink hover:border-ink-muted"
       @click="cart.clear()"
     >
-      Kosongkan
+      {{ t('cart.clear') }}
     </button>
     <button
       data-testid="checkout"
@@ -145,7 +147,7 @@ function onQtyChange(productId: number, event: Event): void {
       class="cursor-pointer rounded-md bg-accent px-4 py-2 font-medium text-white transition-colors duration-150 hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-40"
       @click="checkout"
     >
-      {{ loading ? 'Memproses…' : 'Checkout' }}
+      {{ loading ? t('cart.processing') : t('cart.checkout') }}
     </button>
   </div>
 

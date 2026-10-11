@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { api } from '../api'
 import type { Order } from '../types'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const order = ref<Order | null>(null)
 const loading = ref(true)
@@ -19,11 +21,11 @@ onMounted(async () => {
   } catch (e) {
     const status = (e as { status?: number }).status
     error.value = status === 404
-      ? 'Pesanan tidak ditemukan.'
+      ? t('orderDetail.notFound')
       : status === 403
-        ? 'Pesanan ini bukan milik Anda.'
+        ? t('orderDetail.notOwner')
         : status === 401
-          ? 'Silakan login terlebih dahulu.'
+          ? t('common.unauth')
           : (e as Error).message
   } finally {
     loading.value = false
@@ -48,14 +50,14 @@ function formatDateTime(iso: string | null): string {
 <template>
   <div class="mb-4 flex items-center justify-between">
     <h1 class="text-2xl font-semibold tracking-tight text-ink">
-      Pesanan #{{ $route.params.id }}
+      {{ t('orderDetail.title', { id: $route.params.id }) }}
     </h1>
     <button
       data-testid="back-to-orders"
       class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-sm text-ink hover:border-ink-muted"
       @click="back"
     >
-      ← Kembali
+      {{ t('detail.back') }}
     </button>
   </div>
 
@@ -70,14 +72,14 @@ function formatDateTime(iso: string | null): string {
     v-else-if="loading"
     class="text-ink-muted"
   >
-    Memuat…
+    {{ t('common.loading') }}
   </p>
 
   <template v-else-if="order">
     <dl class="mb-6 grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
       <div class="flex justify-between border-b border-line py-1.5">
         <dt class="text-ink-muted">
-          Status
+          {{ t('orders.status') }}
         </dt>
         <dd
           data-testid="order-status"
@@ -89,7 +91,7 @@ function formatDateTime(iso: string | null): string {
       </div>
       <div class="flex justify-between border-b border-line py-1.5">
         <dt class="text-ink-muted">
-          Total
+          {{ t('common.total') }}
         </dt>
         <dd class="tabular-nums text-ink">
           Rp {{ order.total.toLocaleString('id-ID') }}
@@ -97,7 +99,7 @@ function formatDateTime(iso: string | null): string {
       </div>
       <div class="flex justify-between border-b border-line py-1.5">
         <dt class="text-ink-muted">
-          Transaction ID
+          {{ t('orderDetail.transactionId') }}
         </dt>
         <dd class="font-mono text-xs text-ink">
           {{ order.transaction_id || '—' }}
@@ -105,7 +107,7 @@ function formatDateTime(iso: string | null): string {
       </div>
       <div class="flex justify-between border-b border-line py-1.5">
         <dt class="text-ink-muted">
-          Dibayar
+          {{ t('orderDetail.paidAt') }}
         </dt>
         <dd class="tabular-nums text-ink">
           {{ formatDateTime(order.paid_at) }}
@@ -114,7 +116,7 @@ function formatDateTime(iso: string | null): string {
     </dl>
 
     <h2 class="mb-2 text-lg font-semibold text-ink">
-      Item
+      {{ t('orderDetail.items') }}
     </h2>
     <table
       data-testid="order-items"
@@ -123,16 +125,16 @@ function formatDateTime(iso: string | null): string {
       <thead>
         <tr class="border-b border-ink-muted text-left text-ink-muted">
           <th class="py-2 pr-3 font-medium">
-            Produk
+            {{ t('common.product') }}
           </th>
           <th class="py-2 pr-3 font-medium">
-            Harga
+            {{ t('common.price') }}
           </th>
           <th class="py-2 pr-3 font-medium">
-            Qty
+            {{ t('common.qty') }}
           </th>
           <th class="py-2 font-medium">
-            Subtotal
+            {{ t('common.subtotal') }}
           </th>
         </tr>
       </thead>
@@ -166,7 +168,7 @@ function formatDateTime(iso: string | null): string {
       rel="noopener"
       class="inline-block rounded-md border border-line bg-raised px-3 py-1.5 text-sm text-accent no-underline hover:border-accent"
     >
-      Lihat invoice ↗
+      {{ t('orderDetail.invoice') }}
     </a>
   </template>
 </template>

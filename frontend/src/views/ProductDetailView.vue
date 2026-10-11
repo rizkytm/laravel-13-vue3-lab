@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { api } from '../api'
 import { useCartStore } from '../stores/cart'
 import type { Product } from '../types'
@@ -9,6 +10,7 @@ import type { Product } from '../types'
 const route = useRoute()
 const router = useRouter()
 const cart = useCartStore()
+const { t } = useI18n()
 
 const product = ref<Product | null>(null)
 const loading = ref(true)
@@ -22,9 +24,9 @@ onMounted(async () => {
   } catch (e) {
     const status = (e as { status?: number }).status
     error.value = status === 404
-      ? 'Produk tidak ditemukan.'
+      ? t('detail.notFound')
       : status === 401
-        ? 'Silakan login terlebih dahulu.'
+        ? t('common.unauth')
         : (e as Error).message
   } finally {
     loading.value = false
@@ -37,8 +39,8 @@ function back(): void {
 
 // Opsi produk = JSON dinamis → baris label: nilai yang enak dibaca
 const optionLabels: Record<string, string> = {
-  color: 'Warna',
-  weight_gram: 'Berat',
+  color: 'detail.color',
+  weight_gram: 'detail.weight',
 }
 
 const optionEntries = computed<{ label: string; value: string }[]>(() =>
@@ -47,7 +49,7 @@ const optionEntries = computed<{ label: string; value: string }[]>(() =>
       ? raw.toLocaleString('id-ID')
       : String(raw).replace(/_/g, ' ')
     return {
-      label: optionLabels[key] ?? key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      label: optionLabels[key] ? t(optionLabels[key]) : key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
       value: key.endsWith('_gram') ? `${value} gram` : value,
     }
   }),
@@ -68,14 +70,14 @@ function addToCart(): void {
     class="mb-5 cursor-pointer border-0 bg-transparent p-0 text-sm text-accent hover:text-accent-strong"
     @click="back"
   >
-    ← Kembali
+    {{ t('detail.back') }}
   </button>
 
   <p
     v-if="loading"
     class="text-ink-muted"
   >
-    Memuat…
+    {{ t('common.loading') }}
   </p>
   <p
     v-else-if="error"
@@ -92,19 +94,19 @@ function addToCart(): void {
     <!-- Artifact domain: harga = angka tabular, opsi = data mentah -->
     <dl class="my-5 grid max-w-sm grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
       <dt class="text-ink-muted">
-        Harga
+        {{ t('common.price') }}
       </dt>
       <dd class="tabular-nums text-ink">
         Rp {{ product.price.toLocaleString('id-ID') }}
       </dd>
       <dt class="text-ink-muted">
-        Stok
+        {{ t('detail.stock') }}
       </dt>
       <dd :class="product.stock < 1 ? 'text-danger' : 'text-ink'">
         {{ product.stock }}
       </dd>
       <dt class="text-ink-muted">
-        Opsi
+        {{ t('detail.options') }}
       </dt>
       <dd class="text-ink">
         <span
@@ -134,10 +136,10 @@ function addToCart(): void {
     >
       {{
         product.stock < 1
-          ? 'Stok habis'
+          ? t('detail.outOfStock')
           : inCartQty >= product.stock
-            ? `Sudah di keranjang (${inCartQty})`
-            : 'Tambah ke keranjang'
+            ? t('detail.inCart', { n: inCartQty })
+            : t('detail.addToCart')
       }}
     </button>
   </template>

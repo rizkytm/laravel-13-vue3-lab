@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from './stores/auth'
 import { useCartStore } from './stores/cart'
+import { saveLocale } from './i18n'
 import type { AppConfig } from './types'
 
 const router = useRouter()
 // inject: nilai dari app.provide('appConfig') — tanpa prop drilling
 const config = inject<AppConfig>('appConfig')!
+const { t, locale } = useI18n()
 
 const auth = useAuthStore() // state global: siapa yang login
 const cart = useCartStore() // state global: isi keranjang
@@ -19,6 +22,12 @@ onMounted(() => auth.fetchUser())
 async function logout(): Promise<void> {
   await auth.logout()
   router.push({ name: 'login' })
+}
+
+function switchLocale(event: Event): void {
+  const value = (event.target as HTMLSelectElement).value
+  locale.value = value
+  saveLocale(value) // persist antar reload
 }
 </script>
 
@@ -37,13 +46,13 @@ async function logout(): Promise<void> {
             to="/"
             class="text-ink-muted no-underline hover:text-ink"
           >
-            Produk
+            {{ t('nav.products') }}
           </router-link>
           <router-link
             :to="{ name: 'cart' }"
             class="text-ink-muted no-underline hover:text-ink"
           >
-            Keranjang
+            {{ t('nav.cart') }}
             <span class="font-mono tabular-nums text-ink">({{ cart.count }})</span>
             <span class="tabular-nums">Rp {{ cart.total.toLocaleString('id-ID') }}</span>
           </router-link>
@@ -51,14 +60,14 @@ async function logout(): Promise<void> {
             :to="{ name: 'orders' }"
             class="text-ink-muted no-underline hover:text-ink"
           >
-            Pesanan
+            {{ t('nav.orders') }}
           </router-link>
           <span class="ml-auto text-ink-muted">{{ auth.user.name }}</span>
           <button
             class="cursor-pointer rounded border border-line bg-raised px-2.5 py-1 text-ink hover:border-ink-muted"
             @click="logout"
           >
-            Logout
+            {{ t('nav.logout') }}
           </button>
         </template>
         <router-link
@@ -66,8 +75,21 @@ async function logout(): Promise<void> {
           to="/login"
           class="ml-auto text-accent no-underline hover:text-accent-strong"
         >
-          Login
+          {{ t('nav.login') }}
         </router-link>
+        <select
+          data-testid="lang-select"
+          :value="locale"
+          class="cursor-pointer rounded border border-line bg-raised px-1.5 py-1 text-xs text-ink-muted"
+          @change="switchLocale"
+        >
+          <option value="id">
+            ID
+          </option>
+          <option value="en">
+            EN
+          </option>
+        </select>
       </nav>
     </header>
 

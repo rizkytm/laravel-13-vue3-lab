@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'jsdom',
+      setupFiles: ['tests/setup.ts'],
       // e2e/ milik Playwright — jangan ikut dijalan vitest
       exclude: ['e2e/**', 'node_modules/**'],
     },

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '../api'
 import { useApi } from '../composables/useApi'
 import type { Order, Paginated } from '../types'
 
 // Order history dari API (auth via session cookie Sanctum SPA)
+const { t } = useI18n()
 const { data, loading, error, execute } = useApi<Paginated<Order>>()
 
 function load(): Promise<Paginated<Order> | null> {
@@ -24,14 +26,14 @@ onMounted(load)
 <template>
   <div class="mb-4 flex items-center justify-between">
     <h1 class="text-2xl font-semibold tracking-tight text-ink">
-      Pesanan Saya
+      {{ t('orders.title') }}
     </h1>
     <button
       :disabled="loading"
       class="cursor-pointer rounded-md border border-line bg-raised px-3 py-1.5 text-sm text-ink hover:border-ink-muted disabled:cursor-not-allowed disabled:opacity-40"
       @click="load"
     >
-      {{ loading ? 'Memuat…' : 'Muat ulang' }}
+      {{ loading ? t('common.loading') : t('orders.reload') }}
     </button>
   </div>
 
@@ -45,14 +47,14 @@ onMounted(load)
     v-else-if="loading && !data"
     class="text-ink-muted"
   >
-    Memuat…
+    {{ t('common.loading') }}
   </p>
 
   <p
     v-else-if="data && data.data.length === 0"
     class="py-6 text-center text-ink-muted"
   >
-    Belum ada pesanan.
+    {{ t('orders.empty') }}
   </p>
 
   <table
@@ -66,16 +68,16 @@ onMounted(load)
           #
         </th>
         <th class="py-2 pr-3 font-medium">
-          Status
+          {{ t('orders.status') }}
         </th>
         <th class="py-2 pr-3 font-medium">
-          Total
+          {{ t('common.total') }}
         </th>
         <th class="py-2 pr-3 font-medium">
-          Item
+          {{ t('orders.item') }}
         </th>
         <th class="py-2 font-medium">
-          Transaction
+          {{ t('orders.transaction') }}
         </th>
       </tr>
     </thead>
