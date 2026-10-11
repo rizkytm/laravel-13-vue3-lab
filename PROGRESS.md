@@ -63,6 +63,14 @@ Reminder aksi (belum dikerjakan):
 - ~~Ingatkan untuk gunakan Tailwind CSS untuk styling frontend~~ — SELESAI:
   Tailwind v4 (Vite plugin), token di `src/style.css` (`@theme` OKLCH: warm
   neutrals + accent terracotta), system font + mono buat ID, semua view restyle.
+- Ingatkan untuk **melengkapi fitur e-commerce production grade** (mis. payment
+  gateway real, stok realtime, keranjang server-side, order status machine,
+  refund, inventory movement, dst — scope dulu sebelum dikerjakan).
+- Ingatkan untuk **menghapus halaman web blade yang tidak perlu** (checkout,
+  products index/show, dll yang sudah terhandle Vue 3 + API) — sisakan yang
+  masih dipakai demo fitur framework (upload form, invoice signed, login web).
+- Ingatkan untuk implementasi **link invoice signed di Vue 3** (D1 sudah lulus
+  di web blade — SPA butuh halaman order detail + link `temporarySignedRoute`).
 - Ingatkan untuk implementasi **i18n di Vue 3** (vue-i18n atau composition
   API `useI18n`) — backend sudah `SetLocale ?lang=` + `lang/id.json`; SPA
   masih Inggris/Indonesia campur.
@@ -82,15 +90,15 @@ Reminder aksi (belum dikerjakan):
 - Ingatkan untuk mengecek apakah bisa implement Laravel Filament untuk
   admin dashboardnya (resource Product/Order, review dulu apakah Filament 4
   kompatibel Laravel 13 + sepadan vs bikin sendiri).
-- Ingatkan untuk mengetes seluruh fitur secara manual end-to-end → kerjakan
-  checklist **`FEATURES.md`** (browser + curl, alur: login, browse, checkout,
-  queue, invoice signed, API v1, locale, upload gambar). Temuan bug dicatat
-  dulu, jangan dibetulkan diam-diam.
+- ~~Ingatkan untuk mengetes seluruh fitur secara manual end-to-end~~ —
+  SELESAI: checklist `FEATURES.md` A–F lulus semua (2026-10-11). Temuan bug
+  terdokumentasi di `ISSUES.md` (7 isu, semuanya sudah diperbaiki).
+  Langkah berikut: **Playwright** — bug dari ISSUES.md jadi test pertama.
 - E2E automation (keputusan): **Playwright**, bukan Cypress (multi-tab, auto-wait,
   standar industri). Pasang SETELAH manual pass — bug dari FEATURES.md jadi test
   pertama. Konfigurasi nanti: `webServer` array (artisan serve + vite), queue sync.
-- Ingatkan untuk fix warning yang muncul di `npm run dev` (Vite/Vue) —
-  dev server harus jalan bersih tanpa warning.
+- ~~Ingatkan untuk fix warning yang muncul di `npm run dev`~~ — SELESAI:
+  bersih (eslint --fix 62 warning style tadi).
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 

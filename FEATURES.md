@@ -259,12 +259,20 @@ curl -s -H 'Accept: application/json' http://127.0.0.1:8000/api/v1/orders   # 40
 
 ## F. Checklist bug-hunt (dari PROGRESS)
 
-- [ ] A1–A6 SPA alur utama
-- [ ] B1–B6 web/framework fitur
-- [ ] C1–C3 queue & scheduler
-- [ ] D1–D5 keamanan & error
-- [ ] E API kontrak
-- [ ] UI Tailwind: focus ring terlihat (Tab kemana-mana), mobile 375px masih
-      terbaca, status `pending/paid/failed` gak cuma beda warna (ada teksnya)
-- [ ] `npm run dev` tanpa warning
-- [ ] Catat temuan → tulis di sini → nanti jadi test Playwright pertama
+- [x] A1–A6 SPA alur utama — lulus (bugs: A3 slug binding, A4 clamp stok,
+      A1 login proxy/redirect — detail di `ISSUES.md`)
+- [x] B1–B6 web/framework fitur — lulus (bug: cache `serializable_classes`
+      → `/products` error "property name on string"; B5 langkah CSRF diperbaiki)
+- [x] C1–C3 queue & scheduler — lulus
+- [x] D1–D5 keamanan & error — lulus (D1: link invoice butuh implementasi
+      Vue 3 nanti — lihat PROGRESS)
+- [x] E API kontrak — lulus
+- [x] UI Tailwind: focus ring terlihat (Tab kemana-mana) — lulus
+- [x] mobile 375px aman; status `paid` = teks + warna hijau (bukan warna
+      sendirian — lulus)
+- [x] `npm run dev` tanpa warning
+- [x] Catat temuan → `ISSUES.md` (7 isu + fix) → bug pertama jadi kandidat
+      test Playwright
+
+> Temuan manual E2E selanjutnya: tulis di `ISSUES.md` (format sama),
+> jangan dibetulkan diam-diam.
