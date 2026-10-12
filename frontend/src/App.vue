@@ -80,7 +80,7 @@ function switchLocale(event: Event): void {
         <select
           data-testid="lang-select"
           :value="locale"
-          class="cursor-pointer rounded border border-line bg-raised px-1.5 py-1 text-xs text-ink-muted"
+          class="select cursor-pointer rounded border border-line bg-raised pl-2.5 pr-8 py-1.5 text-xs text-ink-muted hover:text-ink"
           @change="switchLocale"
         >
           <option value="id">

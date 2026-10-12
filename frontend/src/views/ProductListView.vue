@@ -43,7 +43,7 @@ function open(product: Product): void {
       <select
         v-model="sort"
         data-testid="sort-select"
-        class="rounded-md border border-line bg-raised px-2 py-1.5 text-ink focus:border-accent"
+        class="select cursor-pointer rounded-md border border-line bg-raised pl-2.5 pr-8 py-1.5 text-ink focus:border-accent"
       >
         <option value="created_at:desc">{{ t('list.sortNewest') }}</option>
         <option value="name:asc">{{ t('list.sortName') }}</option>
