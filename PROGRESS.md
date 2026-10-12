@@ -157,15 +157,18 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
   DB ter-seed). Tambah test baru dari bug berikutnya, jangan dari skenario sempurna.
 - ~~Ingatkan untuk fix warning yang muncul di `npm run dev`~~ — SELESAI:
   bersih (eslint --fix 62 warning style tadi).
+- ~~Ingatkan untuk **audit project berdasarkan OWASP ASVS**~~ — SELESAI
+  (2026-10-11): **`ASVS_AUDIT.md`** — ASVS 5.0, cakupan L1+L2 (246 requirement,
+  V1-V16; V10 N/A tanpa OAuth). Hasil: ~120 ✅ / ~70 ⚠️ / ~25 ❌ / ~31 N/A.
+  Gap prioritas: security headers (HSTS/CSP/nosniff/dll), cookie Secure +
+  `__Host-`, HTTPS produksi, fitur password (ubah/reset/MFA), rate limit
+  checkout, log auth, antivirus upload, token di localStorage, cache-control.
 
 ## Reminder aksi — belum dikerjakan
 
 - Ingatkan untuk **melengkapi fitur e-commerce production grade** (mis. payment
   gateway real, stok realtime, keranjang server-side, order status machine,
   refund, inventory movement, dst — scope dulu sebelum dikerjakan).
-- Ingatkan untuk **audit project berdasarkan OWASP ASVS**
-  (https://github.com/owasp/asvs) — cocok dengan roadmap poin 6 (Security),
-  target level L2.
 - Ingatkan tentang **fitur register** — saat ini BELUM ADA (user cuma dari
   seeder). Kalau diperlukan: endpoint + form daftar + policy, atau bilang
   register emang di luar scope lab.
