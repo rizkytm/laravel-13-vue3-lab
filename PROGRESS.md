@@ -166,15 +166,15 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 
 ## Reminder aksi — belum dikerjakan
 
-- Ingatkan untuk **melengkapi fitur e-commerce production grade** (mis. payment
-  gateway real, stok realtime, keranjang server-side, order status machine,
-  refund, inventory movement, dst — scope dulu sebelum dikerjakan).
-- Ingatkan tentang **fitur register** — saat ini BELUM ADA (user cuma dari
-  seeder). Kalau diperlukan: endpoint + form daftar + policy, atau bilang
-  register emang di luar scope lab.
-- Ingatkan untuk mengecek apakah bisa implement Laravel Filament untuk
-  admin dashboardnya (resource Product/Order, review dulu apakah Filament 4
-  kompatibel Laravel 13 + sepadan vs bikin sendiri).
+- Ingatkan untuk **melengkapi fitur e-commerce production grade** — scope
+  resmi di **`SCOPE.md`** (2026-10-11: P1 5 item + P2 2 item + admin dashboard
+  **Filament** + register masuk scope). Baca SCOPE.md sebelum mulai.
+- ~~Ingatkan tentang **fitur register**~~ — SELESAI (2026-10-11): diputuskan
+  **masuk scope** — lihat `SCOPE.md` P1 butir 1.
+- ~~Ingatkan untuk mengecek apakah bisa implement Laravel Filament~~ —
+  SELESAI (2026-10-11): diputuskan **pakai Filament** — lihat `SCOPE.md`
+  (bagian Admin dashboard; cek kompatibilitas Filament 4 + Laravel 13 saat
+  mulai implementasi).
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
