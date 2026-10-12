@@ -47,7 +47,7 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 > test, rasio unit vs feature) **sudah terjawab** di bagian "Pertanyaan Tertunda
 > (Terjawab)" di `DEBRIEF.md` — tinggal reminder aksi di bawah.
 
-Reminder aksi (belum dikerjakan):
+## Reminder aksi — sudah dikerjakan
 - ~~Ingatkan Rizky untuk cek ulang docs Laravel~~ — SELESAI (2026-10-11).
   Sudah dipakai: Eloquent (casts incl. encrypted, events, factories, relations,
   scopes, accessor), Query Builder, Collections, Container/DI, Middleware
@@ -92,9 +92,6 @@ Reminder aksi (belum dikerjakan):
 - ~~Ingatkan untuk gunakan Tailwind CSS untuk styling frontend~~ — SELESAI:
   Tailwind v4 (Vite plugin), token di `src/style.css` (`@theme` OKLCH: warm
   neutrals + accent terracotta), system font + mono buat ID, semua view restyle.
-- Ingatkan untuk **melengkapi fitur e-commerce production grade** (mis. payment
-  gateway real, stok realtime, keranjang server-side, order status machine,
-  refund, inventory movement, dst — scope dulu sebelum dikerjakan).
 - ~~Ingatkan untuk **menghapus halaman web blade yang tidak perlu**~~ —
   SELESAI (2026-10-11): dihapus — checkout blade + web CheckoutController,
   `products/index`, `orders/index`, `orders/show`, `welcome`, `ExampleTest`,
@@ -111,8 +108,33 @@ Reminder aksi (belum dikerjakan):
   Test: API (signed link tanpa auth, signature utak-atik → 403), Vue (render
   items + link, 403, tanpa invoice_url), Playwright (checkout → detail → invoice).
 - ~~Ingatkan untuk buat **halaman order detail** di SPA~~ — SELESAI: lihat di atas.
-- Ingatkan untuk mempelajari best practice dari repo
-  https://github.com/joshcirre/larrykonn (bandingkan pola dengan project ini).
+- ~~Ingatkan untuk mempelajari best practice dari repo larrykonn~~ — SELESAI
+  (2026-10-11, studi clone lokal `~/Documents/playground/larrykonn` =
+  Laravel React starter kit + AI). Gap fitur yang DIPAKAI di sana tapi BELUM
+  dicoba di project kita:
+  1. **Fortify** — scaffolding auth: registrasi, reset password, **2FA**
+     (nutup gap Passwords/Verification di gap check docs)
+  2. **laravel/ai + pattern Agents** (`app/Agents/ResearchAgent`, `AnalysisAgent`
+     + Jobs) — bangun fitur AI di Laravel (roadmap poin 7)
+  3. **Wayfinder** — typed routes frontend dari route Laravel
+  4. **Reverb + `routes/channels.php`** — websocket server sendiri + channel
+     auth (kita pakai Pusher driver)
+  5. **Boost (MCP)** — tooling AI agent resmi (AGENTS.md auto-generated)
+  6. **Pail** — live log viewer (`php artisan pail`)
+  7. **Sail** — dev environment Docker (masuk fase Docker kita)
+  8. **S3 flysystem** — storage cloud (kita masih local disk privat)
+  9. **Resend** — mail transactional provider
+  10. **Actions pattern** (`app/Actions/*`) + trait validasi bersama
+      (`app/Concerns/PasswordValidationRules`)
+  11. **Settings pattern** — controller+FormRequest khusus (profile, password,
+      2FA) sebagai section terpisah
+  12. **Bulk endpoint** (`BulkStoreResearchItemRequest`) — insert massal
+  13. **HandleAppearance middleware** — persist tema (dark mode) di session
+  14. **Solo** (`solo.yml`) — process runner (bandingan dengan Makefile kita)
+  15. **Pest 4** — style testing berbeda (kita PHPUnit)
+  16. **Custom stubs** (`stubs/`) — kustomisasi artisan generator
+  Pola menarik (bukan fitur): AGENTS.md berisi konvensi wajib untuk AI agent,
+  "verification scripts dilarang kalau test sudah mencakup".
 - ~~Ingatkan untuk implementasi **pagination & sorting untuk produk**~~ —
   SELESAI (2026-10-11): API `?sort=name|price|created_at&dir=` (whitelist,
   tie-breaker id) + SPA sort select + pagination footer (Prev/Next, "Halaman
@@ -123,15 +145,6 @@ Reminder aksi (belum dikerjakan):
   vue-i18n (composition mode) di `src/i18n/index.ts`, locale id/en, switcher
   ID/EN di header (persist `localStorage`), semua view pakai `t()`. Default
   'id' → test lama tak berubah. +3 test i18n.
-- Ingatkan untuk **audit project berdasarkan OWASP ASVS**
-  (https://github.com/owasp/asvs) — cocok dengan roadmap poin 6 (Security),
-  target level L2.
-- Ingatkan tentang **fitur register** — saat ini BELUM ADA (user cuma dari
-  seeder). Kalau diperlukan: endpoint + form daftar + policy, atau bilang
-  register emang di luar scope lab.
-- Ingatkan untuk mengecek apakah bisa implement Laravel Filament untuk
-  admin dashboardnya (resource Product/Order, review dulu apakah Filament 4
-  kompatibel Laravel 13 + sepadan vs bikin sendiri).
 - ~~Ingatkan untuk mengetes seluruh fitur secara manual end-to-end~~ —
   SELESAI: checklist `FEATURES.md` A–F lulus semua (2026-10-11). Temuan bug
   terdokumentasi di `ISSUES.md` (7 isu, semuanya sudah diperbaiki).
@@ -144,6 +157,21 @@ Reminder aksi (belum dikerjakan):
   DB ter-seed). Tambah test baru dari bug berikutnya, jangan dari skenario sempurna.
 - ~~Ingatkan untuk fix warning yang muncul di `npm run dev`~~ — SELESAI:
   bersih (eslint --fix 62 warning style tadi).
+
+## Reminder aksi — belum dikerjakan
+
+- Ingatkan untuk **melengkapi fitur e-commerce production grade** (mis. payment
+  gateway real, stok realtime, keranjang server-side, order status machine,
+  refund, inventory movement, dst — scope dulu sebelum dikerjakan).
+- Ingatkan untuk **audit project berdasarkan OWASP ASVS**
+  (https://github.com/owasp/asvs) — cocok dengan roadmap poin 6 (Security),
+  target level L2.
+- Ingatkan tentang **fitur register** — saat ini BELUM ADA (user cuma dari
+  seeder). Kalau diperlukan: endpoint + form daftar + policy, atau bilang
+  register emang di luar scope lab.
+- Ingatkan untuk mengecek apakah bisa implement Laravel Filament untuk
+  admin dashboardnya (resource Product/Order, review dulu apakah Filament 4
+  kompatibel Laravel 13 + sepadan vs bikin sendiri).
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
