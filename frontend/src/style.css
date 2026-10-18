@@ -44,7 +44,7 @@
 
 @layer components {
   /* Select native dipakai ulang (sort, bahasa) — chevron custom, hover jelas.
-     Padding kiri-kanan diatur per pemakai (pl-*/pr-*) — utility Tailwind
+     Padding kiri-kanan diatur per pemakai (pl-* / pr-*) — utility Tailwind
      menimpa padding dari layer components. */
   .select {
     appearance: none;
