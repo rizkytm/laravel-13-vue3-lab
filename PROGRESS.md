@@ -1,6 +1,6 @@
 # PROGRESS — Laravel 13 Lab
 
-Overview & log progres belajar Laravel 13 + Vue 3. Rencana lengka di:
+Overview & log progres belajar Laravel 13 + Vue 3. Rencana lengkap di:
 `~/Documents/playground/roadmap/plan-laravel-13-lab.md`
 
 **Mode belajar:** assistant tulis semua kode + test, Rizky baca + cek browser.
@@ -31,7 +31,7 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | F3 — Integrasi full-stack (Sanctum SPA) | ✅ | `feat(F3)` | 35 test Vitest + 94 PHP: cookie session SPA (csrf-cookie/XSRF), auth store, async guard, checkout cart→API, order history |
 | F4 — TypeScript migration | ✅ | `feat(F4)` | Semua src .ts/.vue lang=ts: types.ts kontrak API, generik useApi<T>, type-based props/emits; vue-tsc --noEmit bersih |
 
-Test terakhir: **94 passed (PHP) + 35 passed (Vitest) + `vue-tsc --noEmit` bersih**.
+Test terakhir: **92 passed (PHP) + 44 passed (Vitest) + `vue-tsc --noEmit` bersih**.
 **Seluruh implementasi selesai (M1-M8 + F1-F4)** — commit `feat(F4)`.
 Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).
 
@@ -84,8 +84,8 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
   checklist tes manual E2E section A–F).
 - ~~Ingatkan untuk push ke repo baru~~ — SELESAI: https://github.com/rizkytm/laravel-13-vue3-lab (public)
 - ~~Ingatkan untuk membuatkan GitHub Actions (CI)~~ — SELESAI: `.github/workflows/ci.yml`
-  (path-filtered backend: pint + 94 PHP test + composer audit; frontend: eslint +
-  vue-tsc + 35 Vitest + npm audit critical) + `.github/dependabot.yml` (weekly)
+  (path-filtered backend: pint + 92 PHP test + composer audit; frontend: eslint +
+  vue-tsc + 44 Vitest + npm audit critical) + `.github/dependabot.yml` (weekly)
 - ~~Ingatkan untuk menjalankan `npm audit fix` (root & `frontend/`)~~ — SELESAI:
   `npm audit` root + frontend = 0 vulnerabilities, `composer audit` = bersih,
   gak ada yang perlu difix. CI jaga otomatis tiap push.
@@ -131,7 +131,7 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
   12. **Bulk endpoint** (`BulkStoreResearchItemRequest`) — insert massal
   13. **HandleAppearance middleware** — persist tema (dark mode) di session
   14. **Solo** (`solo.yml`) — process runner (bandingan dengan Makefile kita)
-  15. **Pest 4** — style testing berbeda (kita PHPUnit)
+  15. **Pest 4** — style testing berbeda (kita sudah Pest 5 — beda versi/style)
   16. **Custom stubs** (`stubs/`) — kustomisasi artisan generator
   Pola menarik (bukan fitur): AGENTS.md berisi konvensi wajib untuk AI agent,
   "verification scripts dilarang kalau test sudah mencakup".
@@ -147,7 +147,7 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
   'id' → test lama tak berubah. +3 test i18n.
 - ~~Ingatkan untuk mengetes seluruh fitur secara manual end-to-end~~ —
   SELESAI: checklist `FEATURES.md` A–F lulus semua (2026-10-11). Temuan bug
-  terdokumentasi di `ISSUES.md` (7 isu, semuanya sudah diperbaiki).
+  terdokumentasi di `ISSUES.md` (6 isu, semuanya sudah diperbaiki).
   Langkah berikut: **Playwright** — bug dari ISSUES.md jadi test pertama.
 - E2E automation (keputusan): **Playwright**, bukan Cypress (multi-tab, auto-wait,
   standar industri). ~~Pasang SETELAH manual pass~~ — **SELESAI (2026-10-11)**:
@@ -213,8 +213,10 @@ php artisan route:list               # semua route + middleware
 git log --oneline                    # riwayat milestone
 ```
 
-URL: `/` checkout (M1), `/products` (M2), `/orders` login dulu (M3),
-`/api/v1/*` (M4, butuh token), `?lang=id` (M6), link invoice signed (M7).
+URL web :8000: `/login` (M3), `/products/{slug}` (M2 demo beli + upload),
+`/orders/{id}/invoice` (M7, butuh signature valid). SPA :5173: `/`, `/products`,
+`/cart`, `/orders`, `/orders/:id` (F1–F4). API `/api/v1/*` (M4, butuh token),
+`?lang=id` (M6).
 
 ## Aturan lanjut sesi
 

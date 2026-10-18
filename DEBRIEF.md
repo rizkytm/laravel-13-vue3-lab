@@ -324,7 +324,7 @@ Di TS strict, `e` di catch bertipe `unknown` (bisa apa pun). Cast dibatasi di
 "ini ApiError" paling aman di sana, bukan di 10 komponen.
 
 **5. Kenapa test tetap `.js`?**
-Vitest menjalankan JS apa adanya; konversi 35 file test = noise tanpa nilai
+Vitest menjalankan JS apa adanya; konversi file test = noise tanpa nilai
 tambahan. Typecheck hanya `include: src` — konversi source dulu, test menyusul
 kalau perlu.
 
@@ -364,7 +364,7 @@ handler global.**
 1. Nilai framework = **integrasi** — route+middleware+container+Eloquent+auth
    baru terbukti bersama; unit test yang mock separuh framework menguji mock-nya sendiri.
 2. Eloquent sulit di-unit-test (harus mock DB = mahal/rapuh); feature test +
-   SQLite murah (91 test ≈ 2,5 detik).
+   SQLite murah (92 test ≈ 3 detik).
 3. Feature test menangkap bug yang terlihat: route salah, middleware kelewat,
    binding error, 500 — di luar jangkauan unit test.
 4. Unit test tetap ada untuk logika murni (OrderSummary, cart, rule) — tapi memang minoritas.
@@ -383,7 +383,7 @@ perlu `db:seed` ulang setelah test.
 `DB_DATABASE=:memory:` wajib di phpunit.xml.)
 
 **5. Perlu tambah unit test sekarang?**
-**Tidak perlu.** Suite sudah 94 PHP + 35 FE dan hijau — menambah unit test
+**Tidak perlu.** Suite sudah 92 PHP + 44 FE dan hijau — menambah unit test
 demi rasio angka = gold-plating. Unit test bertambah **natural** kalau:
 1. Test manual E2E menemukan bug → setiap bug = 1 test reproduksi (prioritas).
 2. Logika domain murni baru masuk (diskon/PPn, parser) → unit test tempatnya.

@@ -3,7 +3,7 @@
 A hands-on lab to learn modern Laravel 13 end-to-end: from dependency
 container up to queued payments, structured logging and security hardening.
 Small e-commerce domain — products, orders, checkout — used as the vehicle,
-every feature tested (90+ Pest tests).
+every feature tested (92 Pest tests).
 
 **Learning model:** each milestone = one framework concern, implemented for
 real, verified by tests, checked in the browser. Journey documented in
@@ -35,7 +35,7 @@ composer install
 cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
-php artisan test          # 90+ tests, all green
+php artisan test          # 92 tests, all green
 php artisan serve         # http://127.0.0.1:8000
 ```
 
@@ -74,7 +74,7 @@ app/
 ├── Notifications/      # OrderConfirmation (mail + database)
 ├── Policies/           # OrderPolicy ownership rules
 └── Services/Payment/   # PaymentGateway interface + fake/http drivers
-tests/{Feature,Unit}/   # 90+ Pest tests
+tests/{Feature,Unit}/   # 92 Pest tests
 ```
 
 ## Frontend (phases F1–F4 — complete)
@@ -82,7 +82,7 @@ tests/{Feature,Unit}/   # 90+ Pest tests
 A Vue 3 SPA (`frontend/`) consuming this API — Composition API + `<script
 setup>`, Pinia (cart/auth stores), Vue Router with async guard, Sanctum SPA
 cookie auth, and a full TypeScript migration (`vue-tsc --noEmit` clean).
-Tests: Vitest + Vue Test Utils (35 tests, jsdom).
+Tests: Vitest + Vue Test Utils (44 tests, jsdom).
 
 ## Docs
 

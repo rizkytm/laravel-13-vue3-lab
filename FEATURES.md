@@ -31,14 +31,14 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 - **Kode:** `frontend/src/stores/auth.ts`, `src/api.ts` (`spaLogin`), route `POST /login`
 - **Langkah:** buka `http://localhost:5173` → kena redirect `/login` → isi form → Masuk.
   Reload halaman → tetap login. Logout → balik ke login.
-- **Harpankan:** nav tampil nama user + Keranjang/Pesanan; reload gak minta login ulang
+- **Harapkan:** nav tampil nama user + Keranjang/Pesanan; reload gak minta login ulang
   (session cookie). Login salah → `Email atau password salah.`
 
 ### A2. Guard route async
 - **Kode:** `frontend/src/router/index.ts` (`beforeEach`)
 - **Langkah:** (tanpa login) langsung ketik `http://localhost:5173/orders` →
   juga ketik `http://localhost:5173/cart?redirect=x` dari guest.
-- **Harpankan:** selalu mendarat di `/login`; setelah login → kembali ke halaman
+- **Harapkan:** selalu mendarat di `/login`; setelah login → kembali ke halaman
   yang diminta awal.
 
 ### A3. Browse + search + detail
@@ -46,14 +46,14 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
   composable `useProducts.ts`, API `GET /api/v1/products`
 - **Langkah:** Produk → lihat daftar → ketik di kolom cari → klik 1 produk.
   Coba cari `zzz`. Klik tombol Kembali.
-- **Harpankan:** daftar dari API (bukan statis), search filter real-time di client,
+- **Harapkan:** daftar dari API (bukan statis), search filter real-time di client,
   `zzz` → `Tidak ada produk cocok.`, detail menampilkan harga/stok/opsi.
 
 ### A4. Cart (localStorage, Pinia)
 - **Kode:** `stores/cart.ts` (watch persist), `views/CartView.vue`
 - **Langkah:** detail produk → Tambah ke keranjang → badge nav `(1) Rp …` naik →
   buka Keranjang → ubah qty → Hapus 1 item → reload halaman.
-- **Harpankan:** badge nav sinkron tanpa refresh; **cart bertahan setelah reload**
+- **Harapkan:** badge nav sinkron tanpa refresh; **cart bertahan setelah reload**
   (localStorage); qty < 1 → item hilang; `Kosongkan` → tabel kosong.
 
 ### A5. Checkout full-stack → queue → status paid
@@ -63,21 +63,22 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 - **Langkah:** isi cart → Checkout → otomatis pindah ke Pesanan →
   amati baris order, **jangan** buka apa pun, tunggu ±2 detik (worker jalan)
   → klik `Muat ulang`.
-- **Harpankan:** order muncul `pending` → setelah worker jadi **`paid`**
+- **Harapkan:** order muncul `pending` → setelah worker jadi **`paid`**
   (hijau) + kolom Transaction terisi `txn_…`. Tanpa `queue:work` terminal →
   status tetap `pending` (itu normal, bukan bug).
 - **Bug-hunt:** beli product sampai stok 0 → checkout lagi qty lebih besar dari
   stok → harus muncul error validasi merah (`422`), order GAK dibuat,
   stok DB tidak berubah (cek tinker).
 
-### A6. Order history + detail (blade alternatif)
-- **Kode:** `Api/OrderController` (SPA), `OrderController` web + policy
-  `app/Policies/OrderPolicy.php`
-- **Langkah (SPA):** Pesanan → tabel berisi semua order user login.
-- **Langkah (web :8000):** login `POST` via `/login` blade → `/orders` →
-  klik 1 order. Akses order user lain (ganti id di URL) lewat curl/tinker session.
-- **Harpankan:** SPA hanya menampilkan milik sendiri (API filter user);
-  order asing via web → **403** JSON `message` custom.
+### A6. Order history + detail
+- **Kode:** `Api/OrderController` (SPA), `OrderResource` (`invoice_url`),
+  policy `app/Policies/OrderPolicy.php`
+- **Langkah (SPA):** Pesanan → tabel berisi semua order user login → klik 1
+  order → detail + link invoice.
+- **Langkah (API):** pakai token user lain → `GET /api/v1/orders/{id}` milik
+  user pertama (ganti id di URL).
+- **Harapkan:** SPA hanya menampilkan milik sendiri (API filter user);
+  order asing → **403** JSON `message` custom.
 
 ---
 
@@ -85,37 +86,37 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 
 ### B1. Container singleton + DI (M1)
 - **Kode:** `app/Providers/AppServiceProvider.php` (binding), `Services/Payment/`,
-  `Http/Controllers/CheckoutController.php` (web)
+  `Api/CheckoutController.php` (pemakai binding saat checkout)
 - **Langkah:** `php artisan tinker`:
   `app(App\Services\Payment\PaymentGateway::class) === app(...)` (alias 2x)
-  → lalu `POST /checkout` dua kali (form blade) — lihat `transaction_id`.
-- **Harpankan:** `true` (instance identik, per-request scope); tiap submit web
-  checkout = `txn_` baru. **Web checkout tidak minta login** (demo) — jangan
-  diperlakukan produksi.
+  → lalu checkout 2x (A5) — lihat `transaction_id` tiap order baru.
+- **Harapkan:** `true` (instance identik, per-request scope); tiap checkout =
+  `txn_` baru.
 
 ### B2. Eloquent: cache + accessor + relasi (M2)
-- **Kode:** `ProductController@index` (`Cache::remember` 5 menit),
-  `Models/Product.php` (`casts`, `booted`, accessor `options`),
-  `Langkah:
-  1. buka `/products` (web) → catat isi.
+- **Kode:** `Api/ProductController@index` (`Cache::remember` 5 menit +
+  cache-versioning `products.version`), `Models/Product.php` (`casts`,
+  `booted`, accessor `options`).
+- **Langkah:**
+  1. `GET /api/v1/products` (lihat E) → catat isi.
   2. ubah nama product di tinker: `Product::first()->update(['name'=>'UBAH'])` →
-     buka lagi `/products`.
-- **Harpankan:** daftar berubah **langsung** → bukti invalidation `Cache::forget`
-  di `booted()` jalan. Produk dengan banyak order → `order_items_count` tanpa
-  N+1 (cek `DB::enableQueryLog()` / 1 query di log debug).
+     GET ulang.
+- **Harapkan:** daftar berubah **langsung** → bukti invalidation (version bump
+  di `booted()`) jalan. Produk dengan banyak order → `order_items_count` tanpa
+  N+1 (`withCount('orderItems')`).
 
 ### B3. Beli langsung + stok lock (M2)
 - **Kode:** `ProductController@buy`, `Models/Product.php` `lockForUpdate`
 - **Langkah:** `/products/{slug}` → tombol buy → refresh.
   Beli sampai stok habis.
-- **Harpankan:** stok berkurang konsisten (gak minus — cek tinker);
+- **Harapkan:** stok berkurang konsisten (gak minus — cek tinker);
   stok 0 → tombol disabled / ditolak.
 
 ### B4. Login throttle (M3)
 - **Kode:** `routes/web.php` `throttle:login`, RateLimiter di `AppServiceProvider`
 - **Langkah:** `POST /login` dengan password salah **6x berturut-turut**
   (bisa curl loop).
-- **Harpankan:** percobaan ke-6 → **429** Too Many Attempts. Reset ≈ 1 menit.
+- **Harapkan:** percobaan ke-6 → **429** Too Many Attempts. Reset ≈ 1 menit.
 
 ### B5. Upload gambar produk (M6 — disk privat)
 - **Kode:** `ProductController@uploadImage/@image`, route
@@ -141,7 +142,7 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
   curl -b /tmp/j.txt -F "_token=$TOKEN" -F "image=@/tmp/fake.jpg" \
     -H 'Accept: application/json' "http://127.0.0.1:8000/products/$SLUG/image"
   ```
-- **Harpankan:** upload OK + file masuk `storage/app/private/products/` (path
+- **Harapkan:** upload OK + file masuk `storage/app/private/products/` (path
   random, nama file user diabaikan); download byte identik; file non-gambar
   → `422`; tanpa token → `419` (CSRF — memang diwajibkan).
 
@@ -149,7 +150,7 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 - **Kode:** `Http/Middleware/SetLocale.php`, `lang/id.json`
 - **Langkah:** halaman apa pun tambah `?lang=id` → bandingkan copy
   (mis. pesan error validasi 422).
-- **Harpankan:** pesan berbahasa Indonesia; tanpa param → balik `en`.
+- **Harapkan:** pesan berbahasa Indonesia; tanpa param → balik `en`.
 
 ---
 
@@ -160,21 +161,21 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
   `Notifications/OrderConfirmation.php`, `Jobs/ProcessPayment.php`
 - **Langkah:** checkout (A5) sambil `tail -f storage/logs/laravel.log`.
   Cek `php artisan tinker` → `Notification::count()` / tabel `notifications`.
-- **Harpankan:** urutan event → job → notification tercatat. Mail = log driver
+- **Harapkan:** urutan event → job → notification tercatat. Mail = log driver
   (lihat `storage/logs/laravel.log` baris mail, gak ada SMTP).
 
 ### C2. Job idempotent + retry
 - **Kode:** `ProcessPayment` (`transaction_id` sudah ada → skip)
 - **Langkah:** `php artisan queue:work` STOP di tengah (Ctrl+C) setelah order
   paid → jalankan lagi → atau `php artisan queue:retry all`.
-- **Harpankan:** bayar dua kali → `transaction_id` **tetap sama**, `paid_at`
+- **Harapkan:** bayar dua kali → `transaction_id` **tetap sama**, `paid_at`
   gak berubah (lihat debrief M1).
 
 ### C3. Scheduler cleanup (M5)
 - **Kode:** `Console/Commands/CleanupStaleOrders.php`, `routes/console.php`
 - **Langkah:** buat order pending lama (tinker: ubah `created_at` -30 jam) →
   `php artisan orders:cleanup --hours=24`.
-- **Harpankan:** order stale → status `expired`/dihapus sesuai logika; order
+- **Harapkan:** order stale → status `expired`/dihapus sesuai logika; order
   fresh aman. `php artisan schedule:list` menampilkan perintahnya.
 
 ---
@@ -182,13 +183,13 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 ## D. Keamanan & error handling (M7)
 
 ### D1. Invoice signed URL (30 menit)
-- **Kode:** `OrderController@show` (temporarySignedRoute),
+- **Kode:** `OrderResource` (`invoice_url` → temporarySignedRoute 30 menit),
   route `GET /orders/{id}/invoice` middleware `signed`, view `invoice.blade`
 - **Langkah:**
-  1. login web → buka `/orders/{id}` → klik link invoice → tampil ✓
+  1. SPA → Pesanan → klik 1 order → "Lihat invoice" → tampil ✓
   2. ambil link → hapus 1 karakter query (`signature`) → buka →
   3. buka invoice tanpa login tapi **dengan** signature valid.
-- **Harpankan:** (1) tampil; (2) **403/419 invalid signature**; (3) **tetap
+- **Harapkan:** (1) tampil; (2) **403/419 invalid signature**; (3) **tetap
   tampil** — otorisasi = signature, bukan session. Lewat 30 menit → kedaluwarsa.
 
 ### D2. Format error JSON konsisten (M7)
@@ -199,25 +200,25 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
   curl -H 'Accept: application/json' -X POST http://127.0.0.1:8000/api/v1/checkout  # 401
   curl -H 'Accept: application/json' http://127.0.0.1:8000/orders/9999            # 403/404
   ```
-- **Harpankan:** JSON `{message, …}` + status tepat (404/401/403), **bukan**
+- **Harapkan:** JSON `{message, …}` + status tepat (404/401/403), **bukan**
   HTML error page. Pesan 403 custom milik aplikasi.
 
 ### D3. Validasi 422 (M3/M4)
 - **Langkah:** checkout API tanpa `items` / qty 0 / product tidak ada
   (curl `POST /api/v1/checkout` dengan body kosong).
-- **Harpankan:** `422` + `errors` per-field (bukan 500).
+- **Harapkan:** `422` + `errors` per-field (bukan 500).
 
 ### D4. Encrypted attribute (M7)
 - **Kode:** `Models/User.php` cast `'phone' => 'encrypted'`
 - **Langkah:** tinker → `User::first()->phone` (terbaca normal) →
   `DB::table('users')->value('phone')`.
-- **Harpankan:** di DB terlihat **ciphertext** (`base64:`/blok acak), bukan
+- **Harapkan:** di DB terlihat **ciphertext** (`base64:`/blok acak), bukan
   nomor telepon plaintext.
 
 ### D5. Log JSON + request_id (M7)
 - **Kode:** `config/logging.php` channel `json`, `withContext`
 - **Langkah:** buat 1 request (mis. login gagal) → `tail -f storage/logs/laravel.log`.
-- **Harpankan:** tiap baris JSON 1 objek; ada `request_id` yang sama antar
+- **Harapkan:** tiap baris JSON 1 objek; ada `request_id` yang sama antar
   baris satu request; level `info` vs `error` sesuai peristiwa. Gak ada
   password/token di log.
 
@@ -252,7 +253,7 @@ curl -s -H 'Accept: application/json' http://127.0.0.1:8000/api/v1/orders   # 40
 
 - **Kode:** `routes/api.php`, `Http/Resources/*` (bentuk response),
   `Middleware/EnsureCartNotEmpty.php`
-- **Harpankan:** semua response JSON sesuai resource (field `data`/`meta`);
+- **Harapkan:** semua response JSON sesuai resource (field `data`/`meta`);
   401/404/422 berformat konsisten; order hanya milik token tsb.
 
 ---
@@ -271,7 +272,7 @@ curl -s -H 'Accept: application/json' http://127.0.0.1:8000/api/v1/orders   # 40
 - [x] mobile 375px aman; status `paid` = teks + warna hijau (bukan warna
       sendirian — lulus)
 - [x] `npm run dev` tanpa warning
-- [x] Catat temuan → `ISSUES.md` (7 isu + fix) → bug pertama jadi kandidat
+- [x] Catat temuan → `ISSUES.md` (6 isu + fix) → bug pertama jadi kandidat
       test Playwright
 
 > Temuan manual E2E selanjutnya: tulis di `ISSUES.md` (format sama),
