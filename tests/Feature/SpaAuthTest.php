@@ -24,6 +24,22 @@ it('authenticates api request via session cookie after login', function () {
         ->assertJsonCount(0, 'data'); // user belum punya order — bukti 200, bukan 401
 });
 
+// Regresi bug 2026-10-18: login 302 sukses tapi SPA selalu tampil
+// "Email atau password salah." — /api/user balik 401.
+// Akar: origin Vite dev (:5173) tidak ada di sanctum.stateful →
+// EnsureFrontendRequestsAreStateful menganggap request bukan dari frontend →
+// StartSession tidak jalan di /api/* → cookie session diabaikan.
+//
+// Di-test feature assertion-nya harus ke CONFIG: instance app dibagi antar
+// request dalam satu test, jadi guard tetap menganggap user login meski
+// middleware session tidak pernah jalan (test lolos = palsu).
+it('lists the Vite dev origin as a stateful Sanctum domain', function () {
+    $stateful = config('sanctum.stateful');
+
+    expect($stateful)->toContain('localhost:5173')
+        ->and($stateful)->toContain('127.0.0.1:5173');
+});
+
 it('still rejects api request without any credentials', function () {
     $this->getJson('/api/v1/orders')->assertUnauthorized();
 });

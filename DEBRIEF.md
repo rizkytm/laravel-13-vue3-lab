@@ -364,7 +364,7 @@ handler global.**
 1. Nilai framework = **integrasi** — route+middleware+container+Eloquent+auth
    baru terbukti bersama; unit test yang mock separuh framework menguji mock-nya sendiri.
 2. Eloquent sulit di-unit-test (harus mock DB = mahal/rapuh); feature test +
-   SQLite murah (92 test ≈ 3 detik).
+   SQLite murah (93 test ≈ 3 detik).
 3. Feature test menangkap bug yang terlihat: route salah, middleware kelewat,
    binding error, 500 — di luar jangkauan unit test.
 4. Unit test tetap ada untuk logika murni (OrderSummary, cart, rule) — tapi memang minoritas.

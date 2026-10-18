@@ -126,3 +126,41 @@ e2e `orders.spec.ts` kini benar-benar MENGKLIK link dan memverifikasi heading
 **Pelajaran:** fitur yang menyentuh dua origin (SPA + backend) harus diuji
 sampai halaman tujuan tampil, bukan sampai href-nya benar. E2E yang hanya
 assert atribut href tidak menangkap bug ini.
+
+## 7. Login 302 sukses, SPA tetap bilang "Email atau password salah." (2026-10-18)
+
+**Laporan:** `make dev`, login `test@example.com` / `password` → pesan "Email
+atau password salah." Padahal kredensial benar (user ada di DB, hash cocok).
+
+**Akar masalah:** `POST /login` sebenarnya **302 sukses** — yang gagal adalah
+`GET /api/user` (401) yang dipakai auth store sebagai BUKTI login. Sanctum
+`EnsureFrontendRequestsAreStateful` hanya menyalakan session middleware kalau
+Referer/Origin cocok dengan `config('sanctum.stateful')`. Daftar itu berisi
+`localhost`, `localhost:3000`, `127.0.0.1`, `127.0.0.1:8000`, `::1` + APP_URL
+— **`localhost:5173` (origin Vite dev) tidak ada** → request dianggap bukan
+frontend → StartSession tidak jalan di `/api/*` → cookie session diabaikan →
+401 → SPA melempar error kredensial palsu.
+
+Bukti: curl dengan `Referer: http://localhost:5173/` → 401; dengan
+`Referer: http://localhost:8000/` → 200. Request identik, beda referer saja.
+
+**Fix:** `config/sanctum.php` — origin dev Vite (`localhost:5173`,
+`127.0.0.1:5173`) masuk daftar default `stateful`; regression test
+`SpaAuthTest` `lists the Vite dev origin as a stateful Sanctum domain`.
+
+**Pelajaran:**
+- Pesan error bisa berasal dari LAPISAN BERBEDA dari yang terlihat. "Email atau
+  password salah." di UI = sintesis SPA (auth store), bukan respons Laravel —
+  login sukses pun menghasilkan pesan yang sama. Bedakan siapa yang melempar
+  sebelum menyelidiki kredensial.
+- Test feature **tidak bisa** menangkap bug ini: instance app dibagi antar
+  request dalam satu test, jadi guard tetap menganggap user login meski
+  middleware session tidak pernah jalan. Test yang lolos = palsu. Yang
+  menangkap: **e2e Playwright** (jalankan lewat origin asli) dan assertion
+  konfigurasi langsung ke `sanctum.stateful`.
+- `php artisan test` + Pint + vitest lulus semua tidak membuktikan alur
+  lintas-origin bekerja. Selalu jalankan e2e yang menyentuh origin asli.
+- Hati-hati saat debug: mencabut fix sementara untuk "membuktikan test gagal"
+  bisa meninggalkan konfigurasi setengah jalan. Verifikasi ulang setelah
+  restore (di sesi ini: 4 e2e sempat gagal karena bukan fix-nya, melainkan
+  rate limiter `throttle:login` 5/menit yang kebablasan oleh test berulang).

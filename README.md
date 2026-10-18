@@ -35,7 +35,7 @@ composer install
 cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
-php artisan test          # 92 tests, all green
+php artisan test          # 93 tests, all green
 php artisan serve         # http://127.0.0.1:8000
 ```
 

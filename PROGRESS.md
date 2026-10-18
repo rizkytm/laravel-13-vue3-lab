@@ -31,7 +31,7 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | F3 — Integrasi full-stack (Sanctum SPA) | ✅ | `feat(F3)` | 35 test Vitest + 94 PHP: cookie session SPA (csrf-cookie/XSRF), auth store, async guard, checkout cart→API, order history |
 | F4 — TypeScript migration | ✅ | `feat(F4)` | Semua src .ts/.vue lang=ts: types.ts kontrak API, generik useApi<T>, type-based props/emits; vue-tsc --noEmit bersih |
 
-Test terakhir: **92 passed (PHP) + 44 passed (Vitest) + `vue-tsc --noEmit` bersih**.
+Test terakhir: **93 passed (PHP) + 44 passed (Vitest) + `vue-tsc --noEmit` bersih**.
 **Seluruh implementasi selesai (M1-M8 + F1-F4)** — commit `feat(F4)`.
 Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).
 
