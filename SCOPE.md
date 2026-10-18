@@ -3,6 +3,28 @@
 Scope resmi sebelum implementasi (disepakati 2026-10-11). Reminder "melengkapi
 fitur e-commerce production grade" di PROGRESS menunjuk file ini.
 
+## Status implementasi (2026-10-18) — SEMUA SELESAI ✅
+
+Seluruh P1 + P2 + admin Filament di bawah sudah diimplementasi, lulus test,
+dan di-commit per tahap (lihat PROGRESS.md baris T1–T8). Deviasi yang perlu
+dicatat (jujur, bukan scope creep):
+
+- **Status machine**: yang dibangun `pending → paid | cancelled | failed`
+  dan `paid → refunded`. **`shipped`/`completed` TIDAK ditambahkan** — tidak
+  ada fitur pemenuhan logistik di scope ini, jadi menambah status itu hanya
+  jadi hiasan tanpa transisi nyata. Enum siap dikembangkan nanti.
+- **Register**: `POST /register` (web/session, bukan `/api/v1/register`) —
+  konsisten dengan login SPA yang sudah ada (cookie session via proxy Vite).
+- **Stok realtime**: `StockUpdated` tetap broadcast (log driver), frontend
+  subscribe di `realtime.ts` dengan **graceful no-op** — tanpa Redis/Reverb
+  (stack lab) tidak ada websocket sungguhan; titik sambung Reverb/Pusher
+  disiapkan (`window.__BROADCAST__`), logika clamp teruji dengan broadcaster
+  tiruan.
+- **Filament**: pakai **Filament 4** (v3 tidak kompatibel Laravel 13) —
+  kompatibilitas terkonfirmasi, tidak perlu fallback admin custom.
+- **Password**: reset + email verification (tahap 1). "Ubah password" (ganti
+  password saat login) belum ada — di luar scope butir ini.
+
 ## In scope
 
 ### P1 — Inti

@@ -30,9 +30,18 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | F2 — Pinia + composables | ✅ | `feat(F2)` | 25 test Vitest: cart store (add/qty/getter, watch persist localStorage, corrupted safe), useProducts/useApi composables, CartView |
 | F3 — Integrasi full-stack (Sanctum SPA) | ✅ | `feat(F3)` | 35 test Vitest + 94 PHP: cookie session SPA (csrf-cookie/XSRF), auth store, async guard, checkout cart→API, order history |
 | F4 — TypeScript migration | ✅ | `feat(F4)` | Semua src .ts/.vue lang=ts: types.ts kontrak API, generik useApi<T>, type-based props/emits; vue-tsc --noEmit bersih |
+| T1 — Register + password reset + email verification | ✅ | `feat(auth)` | +23 PHP: /register auto-login, forgot/reset (token hashed, expiry 60m, generik anti-enumeration), verifikasi email signed+idempotent; 4 view SPA |
+| T2 — Status machine + inventory movement | ✅ | `feat(domain)` | +17 PHP: OrderStatus::canTransitionTo + Order::transitionTo/cancel; inventory_movements (in/out/adjust, signed delta, stock_after), InventoryService satu-satunya jalan ubah stok, invariant SUM==stock |
+| T3 — Keranjang server-side + rate limit checkout | ✅ | `feat(cart)` | +10 PHP: cart_items per user, server otoritatif clamp, checkout baca cart DB + clear dalam transaksi, throttle checkout 10/mnt |
+| T4 — Payment gateway Midtrans | ✅ | `feat(payment+admin)` | +9 PHP: MidtransPaymentGateway (Snap Http::fake + verifySignature sha512), webhook publik diverifikasi signature → transisi paid, idempoten |
+| T5 — Refund | ✅ | `feat(payment+admin)` | +8 PHP: status Refunded (paid→refunded), RefundablePaymentGateway (ISP), RefundService uang-dulu-status-sesudah |
+| T6 — Filament admin (v4) | ✅ | `feat(payment+admin)` | +5 PHP: panel /admin hanya is_admin, resource Order (aksi via machine)/Product (stok read-only)/User (toggle admin) |
+| T7 — Stok realtime | ✅ | `feat(payment+admin)` | +6 Vitest: realtime.ts subscribe StockUpdated, graceful no-op tanpa broadcaster, cart.applyStockUpdate clamp qty |
+| T8 — Cancel order customer | ✅ | `feat(payment+admin)` | +6 PHP +2 Vitest: POST /orders/{id}/cancel + policy (pemilik+pending), tombol SPA, restock berjejak |
 
-Test terakhir: **93 passed (PHP) + 44 passed (Vitest) + `vue-tsc --noEmit` bersih**.
-**Seluruh implementasi selesai (M1-M8 + F1-F4)** — commit `feat(F4)`.
+Test terakhir: **172 passed (PHP) + 68 passed (Vitest) + `vue-tsc --noEmit` bersih**.
+**Seluruh implementasi selesai (M1-M8 + F1-F4 + scope T1-T8)** — commit `feat(F4)` + `089f0e5`.
+Scope e-commerce production grade (SCOPE.md) lulus penuh; deviasi tercatat di SCOPE.md.
 Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).
 
 Run test frontend: `cd frontend && npm test`. Dev: 2 server (`php artisan serve` +
@@ -166,15 +175,17 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 
 ## Reminder aksi — belum dikerjakan
 
-- Ingatkan untuk **melengkapi fitur e-commerce production grade** — scope
-  resmi di **`SCOPE.md`** (2026-10-11: P1 5 item + P2 2 item + admin dashboard
-  **Filament** + register masuk scope). Baca SCOPE.md sebelum mulai.
+- ~~Ingatkan untuk **melengkapi fitur e-commerce production grade**~~ —
+  **SELESAI (2026-10-18)**: seluruh scope `SCOPE.md` lulus (T1–T8, lihat
+  tabel Status + deviasi tercatat di SCOPE.md). Gap ASVS terkait (fitur
+  password reset/verification, rate limit checkout) ikut tertutup; sisanya
+  (security headers, cache-control, cookie Secure, HTTPS, token storage,
+  log auth, antivirus upload) tetap catatan hardening produksi.
 - ~~Ingatkan tentang **fitur register**~~ — SELESAI (2026-10-11): diputuskan
   **masuk scope** — lihat `SCOPE.md` P1 butir 1.
 - ~~Ingatkan untuk mengecek apakah bisa implement Laravel Filament~~ —
-  SELESAI (2026-10-11): diputuskan **pakai Filament** — lihat `SCOPE.md`
-  (bagian Admin dashboard; cek kompatibilitas Filament 4 + Laravel 13 saat
-  mulai implementasi).
+  SELESAI (2026-10-18): pakai **Filament 4** (v3 tak kompatibel Laravel 13),
+  panel /admin + resource Order/Product/User aktif.
 
 ## Rencana M8 — Testing polish & dokumentasi (milestone backend terakhir)
 
@@ -213,9 +224,12 @@ php artisan route:list               # semua route + middleware
 git log --oneline                    # riwayat milestone
 ```
 
-URL web :8000: `/login` (M3), `/products/{slug}` (M2 demo beli + upload),
-`/orders/{id}/invoice` (M7, butuh signature valid). SPA :5173: `/`, `/products`,
-`/cart`, `/orders`, `/orders/:id` (F1–F4). API `/api/v1/*` (M4, butuh token),
+URL web :8000: `/login` (M3), `/register` + `/forgot-password` + `/reset-password`
+(T1), `/products/{slug}` (M2 demo beli + upload), `/orders/{id}/invoice` (M7,
+butuh signature valid), `/admin` (T6, Filament, hanya is_admin).
+SPA :5173: `/`, `/products`, `/cart`, `/orders`, `/orders/:id`, `/verify-email`
+(F1–F4 + T1/T8). API `/api/v1/*` (M4, butuh token; cart + checkout T3,
+`/orders/{id}/cancel` T8) + `/api/payments/midtrans/webhook` (T4, publik),
 `?lang=id` (M6).
 
 ## Aturan lanjut sesi
