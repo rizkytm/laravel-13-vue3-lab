@@ -59,5 +59,19 @@ export const useCartStore = defineStore('cart', () => {
     items.value = res.data
   }
 
-  return { items, count, total, fetch, add, setQuantity, remove, clear }
+  /**
+   * Terima update stok realtime (broadcast StockUpdated) — clamp quantity
+   * lokal ke stok baru TANPA panggil API (ini optimis lokal; angka final
+   * tetap server saat checkout). Item yang quantity-nya jadi 0 tidak
+   * dihapus otomatis — biar user melihat "stok habis", bukan hilang diam-diam.
+   */
+  function applyStockUpdate(productId: number, stock: number): void {
+    const item = items.value.find((i) => i.product_id === productId)
+    if (item) {
+      item.stock = stock
+      item.quantity = Math.min(item.quantity, stock)
+    }
+  }
+
+  return { items, count, total, fetch, add, setQuantity, remove, clear, applyStockUpdate }
 })

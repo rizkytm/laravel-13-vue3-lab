@@ -53,6 +53,28 @@ class Order extends Model
     }
 
     /**
+     * Refund: transisi paid → refunded + KEMBALIKAN stok (jejak movement 'in').
+     * Atomic — kalau restock gagal, refund ikut batal. Pemanggilan gateway
+     * (pengembalian uang) ditangani RefundService, bukan model.
+     */
+    public function refund(string $reason = 'Order di-refund'): bool
+    {
+        return DB::transaction(function () use ($reason): bool {
+            if (! $this->transitionTo(OrderStatus::Refunded)) {
+                return false;
+            }
+
+            $inventory = app(InventoryService::class);
+
+            foreach ($this->items()->with('product')->get() as $item) {
+                $inventory->increment($item->product, $item->quantity, $reason, $this);
+            }
+
+            return true;
+        });
+    }
+
+    /**
      * Batalkan order: transisi status + KEMBALIKAN stok (jejak movement 'in').
      * Atomic — kalau restock gagal, pembatalan ikut batal.
      */

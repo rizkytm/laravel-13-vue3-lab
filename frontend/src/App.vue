@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { inject, onMounted, watch } from 'vue'
+import { inject, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from './stores/auth'
 import { useCartStore } from './stores/cart'
+import { connectCartStockSync } from './realtime'
 import { saveLocale } from './i18n'
 import type { AppConfig } from './types'
 
@@ -19,16 +20,27 @@ const cart = useCartStore() // state global: isi keranjang (server-side)
 // (guard route tetap jadi penjaga utama)
 onMounted(() => auth.fetchUser())
 
+// Realtime stok (tahap 7): saat login, subscribe channel 'products' event
+// StockUpdated → clamp qty cart lokal tanpa refresh. No-op di dev (log
+// driver); aktif kalau broadcaster (Reverb/Pusher) dipasang di produksi.
+let unsubscribeStock: (() => void) | null = null
+
 // Keranjang server-side: sinkronkan setiap status login berubah —
 // login → tarik cart milik user; logout → kosongkan (jangan bocorkan
 // cart user sebelumnya ke user berikutnya di mesin yang sama)
 watch(() => auth.user, async (user) => {
+  unsubscribeStock?.()
+  unsubscribeStock = null
+
   if (user) {
     await cart.fetch()
+    unsubscribeStock = connectCartStockSync()
   } else {
     cart.items = []
   }
 })
+
+onUnmounted(() => unsubscribeStock?.())
 
 async function logout(): Promise<void> {
   await auth.logout()

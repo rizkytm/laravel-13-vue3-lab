@@ -77,6 +77,8 @@ const messages = {
       invoice: 'Lihat invoice ↗',
       notFound: 'Pesanan tidak ditemukan.',
       notOwner: 'Pesanan ini bukan milik Anda.',
+      cancel: 'Batalkan order',
+      cancelling: 'Membatalkan…',
     },
     login: {
       email: 'Email',
@@ -190,6 +192,8 @@ const messages = {
       invoice: 'View invoice ↗',
       notFound: 'Order not found.',
       notOwner: 'This order is not yours.',
+      cancel: 'Cancel order',
+      cancelling: 'Cancelling…',
     },
     login: {
       email: 'Email',

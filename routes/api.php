@@ -5,12 +5,20 @@ use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\TokenController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Middleware\EnsureCartNotEmpty;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public: login → personal access token (M3)
 Route::post('/token', [TokenController::class, 'store'])->middleware('throttle:login');
+
+// Webhook pembayaran (server-ke-server) — TANPA auth session & TANPA CSRF
+// (grup api tidak pakai VerifyCsrfToken). Keamanan = signature diverifikasi
+// di controller. Rate limit longgar: Midtrans retry berkali-kali itu normal.
+Route::post('/payments/midtrans/webhook', PaymentWebhookController::class)
+    ->middleware('throttle:60,1')
+    ->name('payments.midtrans.webhook');
 
 Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => $request->user());
 
@@ -22,6 +30,9 @@ Route::prefix('v1')->name('v1.')->middleware('auth:sanctum')->group(function () 
         // show by slug — konsisten dengan web ({product:slug}) & SPA (route params.slug)
         ->parameters(['products' => 'product:slug']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
+    // Tahap 8 — customer batalkan order pending (status machine + restock)
+    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel'])
+        ->name('orders.cancel');
 
     // Tahap 3 — keranjang server-side (per user). Server otoritatif:
     // quantity di-clamp ke stok; checkout membaca tabel ini.

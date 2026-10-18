@@ -36,6 +36,26 @@ function back(): void {
   router.push({ name: 'orders' })
 }
 
+// Tahap 8 — customer batalkan order pending. Backend me-restock stok
+// (jejak movement) dan menolak (403) bila bukan pending / bukan pemilik.
+const cancelling = ref(false)
+
+async function cancelOrder(): Promise<void> {
+  if (!order.value) return
+  cancelling.value = true
+  error.value = ''
+  try {
+    const res = await api.raw<{ data: Order }>(`/orders/${order.value.id}/cancel`, {
+      method: 'POST',
+    })
+    order.value = res.data // status jadi 'cancelled'
+  } catch (e) {
+    error.value = (e as Error).message
+  } finally {
+    cancelling.value = false
+  }
+}
+
 function statusClass(status: string): string {
   if (status === 'paid') return 'text-success'
   if (status === 'pending') return 'text-warn'
@@ -170,5 +190,15 @@ function formatDateTime(iso: string | null): string {
     >
       {{ t('orderDetail.invoice') }}
     </a>
+
+    <button
+      v-if="order.status === 'pending'"
+      data-testid="cancel-order"
+      :disabled="cancelling"
+      class="ml-3 inline-block cursor-pointer rounded-md border border-danger px-3 py-1.5 text-sm text-danger hover:bg-danger hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+      @click="cancelOrder"
+    >
+      {{ cancelling ? t('orderDetail.cancelling') : t('orderDetail.cancel') }}
+    </button>
   </template>
 </template>

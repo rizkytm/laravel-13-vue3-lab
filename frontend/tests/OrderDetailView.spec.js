@@ -82,4 +82,37 @@ describe('OrderDetailView', () => {
 
     expect(wrapper.find('[data-testid="invoice-link"]').exists()).toBe(false)
   })
+
+  it('hides cancel button for a paid order', async () => {
+    const { wrapper } = await mountDetail(
+      vi.fn().mockResolvedValue(jsonResponse(orderPayload)), // status paid
+    )
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="cancel-order"]').exists()).toBe(false)
+  })
+
+  it('cancels a pending order and updates status to cancelled', async () => {
+    const pendingPayload = { data: { ...orderPayload.data, status: 'pending', paid_at: null, transaction_id: null } }
+    const cancelledPayload = { data: { ...orderPayload.data, status: 'cancelled' } }
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(pendingPayload)) // GET detail
+      .mockResolvedValueOnce(jsonResponse(cancelledPayload)) // POST cancel
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { wrapper } = await mountDetail(fetchMock)
+    await flushPromises()
+
+    // Tombol cancel hanya tampil untuk order pending
+    const btn = wrapper.get('[data-testid="cancel-order"]')
+    await btn.trigger('click')
+    await flushPromises()
+
+    const [url, init] = fetchMock.mock.calls[1]
+    expect(url).toBe('/api/v1/orders/7/cancel')
+    expect(init.method).toBe('POST')
+    expect(wrapper.get('[data-testid="order-status"]').text()).toBe('cancelled')
+    expect(wrapper.find('[data-testid="cancel-order"]').exists()).toBe(false) // hilang setelah batal
+  })
 })

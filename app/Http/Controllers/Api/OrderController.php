@@ -42,4 +42,20 @@ class OrderController extends Controller
 
         return new OrderResource($order);
     }
+
+    /**
+     * POST /api/v1/orders/{order}/cancel — customer batalkan order PENDING.
+     * Order::cancel() = transisi status machine + restock berjejak (atomic).
+     * Policy menolak non-pending/non-pemilik (403) sebelum sampai ke model.
+     */
+    public function cancel(Order $order): OrderResource
+    {
+        Gate::authorize('cancel', $order);
+
+        $order->cancel();
+        $order->load(['user', 'items.product']);
+        $order->loadCount('items');
+
+        return new OrderResource($order);
+    }
 }

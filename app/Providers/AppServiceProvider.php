@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Services\Payment\FakePaymentGateway;
 use App\Services\Payment\HttpPaymentGateway;
+use App\Services\Payment\MidtransPaymentGateway;
 use App\Services\Payment\PaymentGateway;
+use App\Services\Payment\RefundablePaymentGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -20,13 +22,28 @@ class AppServiceProvider extends ServiceProvider
         // Container binding: interface → implementasi.
         // Singleton = 1 instance per request lifecycle.
         // Driver dipilih dari config('payment.driver'):
-        //   PAYMENT_DRIVER=fake → FakePaymentGateway (dev/test)
-        //   PAYMENT_DRIVER=http → HttpPaymentGateway (provider asli)
+        //   PAYMENT_DRIVER=fake     → FakePaymentGateway (dev/test)
+        //   PAYMENT_DRIVER=http     → HttpPaymentGateway (provider asli)
+        //   PAYMENT_DRIVER=midtrans → MidtransPaymentGateway (Snap + webhook)
         // Controller tetap hanya tahu PaymentGateway — ganti driver tanpa
         // menyentuh satu baris controller pun (Open/Closed).
         $this->app->singleton(PaymentGateway::class, function ($app) {
-            return $app['config']['payment.driver'] === 'http'
-                ? $app->make(HttpPaymentGateway::class)
+            return match ($app['config']['payment.driver']) {
+                'http' => $app->make(HttpPaymentGateway::class),
+                'midtrans' => $app->make(MidtransPaymentGateway::class),
+                default => $app->make(FakePaymentGateway::class),
+            };
+        });
+
+        // RefundService bergantung ke kontrak refund (ISP: tidak semua driver
+        // wajib refund). Resolve ke instance driver YANG SAMA — Http driver
+        // (tanpa refund) cukup diikat ke fake agar binding tetap valid; saat
+        // dipakai, RefundService mengecek instanceof RefundablePaymentGateway.
+        $this->app->bind(RefundablePaymentGateway::class, function ($app) {
+            $driver = $app->make(PaymentGateway::class);
+
+            return $driver instanceof RefundablePaymentGateway
+                ? $driver
                 : $app->make(FakePaymentGateway::class);
         });
     }

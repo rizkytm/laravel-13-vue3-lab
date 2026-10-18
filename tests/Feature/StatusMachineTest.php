@@ -17,11 +17,18 @@ it('allows pending → paid, cancelled, and failed', function () {
         ->and(OrderStatus::Pending->canTransitionTo(OrderStatus::Failed))->toBeTrue();
 });
 
-it('forbids every transition out of terminal states (paid, cancelled, failed)', function () {
-    foreach ([OrderStatus::Paid, OrderStatus::Cancelled, OrderStatus::Failed] as $from) {
+it('forbids every transition out of truly terminal states (cancelled, failed, refunded)', function () {
+    foreach ([OrderStatus::Cancelled, OrderStatus::Failed, OrderStatus::Refunded] as $from) {
         foreach (OrderStatus::cases() as $to) {
             expect($from->canTransitionTo($to))->toBeFalse("{$from->value} → {$to->value} seharusnya dilarang");
         }
+    }
+});
+
+it('allows paid → refunded and nothing else from paid', function () {
+    foreach (OrderStatus::cases() as $to) {
+        expect(OrderStatus::Paid->canTransitionTo($to))->toBe($to === OrderStatus::Refunded,
+            "paid → {$to->value}");
     }
 });
 

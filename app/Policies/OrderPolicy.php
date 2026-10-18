@@ -30,4 +30,13 @@ class OrderPolicy
     {
         return $user->id === $order->user_id && $order->status === OrderStatus::Pending;
     }
+
+    /**
+     * Customer boleh batalkan order miliknya SELAMA masih pending.
+     * Order paid tidak bisa dibatalkan sendiri (refund = urusan admin).
+     */
+    public function cancel(User $user, Order $order): bool
+    {
+        return $user->id === $order->user_id && $order->status === OrderStatus::Pending;
+    }
 }
