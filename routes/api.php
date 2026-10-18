@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductController;
@@ -22,7 +23,17 @@ Route::prefix('v1')->name('v1.')->middleware('auth:sanctum')->group(function () 
         ->parameters(['products' => 'product:slug']);
     Route::apiResource('orders', OrderController::class)->only(['index', 'show']);
 
+    // Tahap 3 — keranjang server-side (per user). Server otoritatif:
+    // quantity di-clamp ke stok; checkout membaca tabel ini.
+    Route::get('cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('cart/items', [CartController::class, 'store'])->name('cart.items.store');
+    Route::patch('cart/items/{product}', [CartController::class, 'update'])->name('cart.items.update');
+    Route::delete('cart/items/{product}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+    Route::delete('cart', [CartController::class, 'clear'])->name('cart.clear');
+
+    // throttle:checkout → RateLimiter 'checkout' (10/menit per user) —
+    // proteksi gateway dari burst order
     Route::post('checkout', [CheckoutController::class, 'store'])
-        ->middleware(EnsureCartNotEmpty::class)
+        ->middleware([EnsureCartNotEmpty::class, 'throttle:checkout'])
         ->name('checkout.store');
 });

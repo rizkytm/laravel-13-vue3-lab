@@ -28,6 +28,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Order::class);
     }
 
+    /** Keranjang server-side — checkout membaca dari sini, bukan payload. */
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
     /**
      * Get the attributes that should be cast.
      *

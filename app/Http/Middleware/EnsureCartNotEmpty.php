@@ -7,17 +7,17 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Gatekeeping payload SEBELUM masuk FormRequest/controller:
- * checkout tanpa items = permintaan tidak valid, tolak di pintu.
- * (Validasi detail per item tetap di CheckoutRequest + transaksi.)
+ * Gatekeeping SEBELUM masuk controller: checkout dengan keranjang kosong
+ * = permintaan tidak valid, tolak di pintu. Pengecekan terhadap cart
+ * SERVER-SIDE (tabel cart_items) — bukan payload, yang kini tidak lagi
+ * membawa items.
+ * (Validasi detail per item + lock stok tetap di transaksi checkout.)
  */
 class EnsureCartNotEmpty
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $items = $request->input('items');
-
-        if (! is_array($items) || $items === []) {
+        if ($request->user()->cartItems()->doesntExist()) {
             return response()->json([
                 'message' => 'Keranjang kosong.',
                 'errors' => ['items' => ['Keranjang tidak boleh kosong.']],

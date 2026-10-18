@@ -103,14 +103,11 @@ it('rolls back both stock and movement when checkout fails mid-transaction', fun
     $user = User::factory()->create();
     $ok = Product::factory()->create(['stock' => 5]);
     $lack = Product::factory()->create(['stock' => 1]);
+    $user->cartItems()->create(['product_id' => $ok->id, 'quantity' => 2]);
+    $user->cartItems()->create(['product_id' => $lack->id, 'quantity' => 5]);
     Sanctum::actingAs($user);
 
-    $this->postJson('/api/v1/checkout', [
-        'items' => [
-            ['product_id' => $ok->id, 'quantity' => 2],
-            ['product_id' => $lack->id, 'quantity' => 5],
-        ],
-    ])->assertStatus(422);
+    $this->postJson('/api/v1/checkout')->assertStatus(422);
 
     // Gerakan 'out' untuk $ok ikut ter-rollback — jejak tidak boleh
     // meninggalkan stok yang tidak ada

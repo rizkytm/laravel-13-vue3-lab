@@ -58,5 +58,12 @@ class AppServiceProvider extends ServiceProvider
                 strtolower($request->input('email')).'|'.$request->ip()
             );
         });
+
+        // Checkout: 10/menit per user — proteksi payment gateway dari
+        // burst order (retry klik ganda, bot). Validasi stok tetap atomik
+        // di transaksi; ini lapisan ekonomi, bukan lapisan kebenaran.
+        RateLimiter::for('checkout', function (Request $request) {
+            return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

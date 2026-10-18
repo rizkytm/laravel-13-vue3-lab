@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onMounted } from 'vue'
+import { inject, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from './stores/auth'
@@ -13,11 +13,22 @@ const config = inject<AppConfig>('appConfig')!
 const { t, locale } = useI18n()
 
 const auth = useAuthStore() // state global: siapa yang login
-const cart = useCartStore() // state global: isi keranjang
+const cart = useCartStore() // state global: isi keranjang (server-side)
 
 // Cek session sekali saat boot — nav langsung tampil benar
 // (guard route tetap jadi penjaga utama)
 onMounted(() => auth.fetchUser())
+
+// Keranjang server-side: sinkronkan setiap status login berubah —
+// login → tarik cart milik user; logout → kosongkan (jangan bocorkan
+// cart user sebelumnya ke user berikutnya di mesin yang sama)
+watch(() => auth.user, async (user) => {
+  if (user) {
+    await cart.fetch()
+  } else {
+    cart.items = []
+  }
+})
 
 async function logout(): Promise<void> {
   await auth.logout()

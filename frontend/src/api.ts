@@ -59,8 +59,9 @@ export async function request<T = unknown>(url: string, { method = 'GET', body }
 // Helper untuk endpoint versioned (/api/v1/*)
 export const api = {
   get: <T = unknown>(path: string) => request<Paginated<T>>(`/api/v1${path}`),
-  // Bentuk spesifik (bukan paginator) — dipakai auth store
-  raw: <T = unknown>(path: string) => request<T>(`/api/v1${path}`),
+  // Bentuk spesifik (bukan paginator) — dipakai auth & cart store
+  raw: <T = unknown>(path: string, options: RequestOptions = {}) =>
+    request<T>(`/api/v1${path}`, options),
   post: <T = unknown>(path: string, body?: unknown) => request<T>(`/api/v1${path}`, { method: 'POST', body }),
 }
 

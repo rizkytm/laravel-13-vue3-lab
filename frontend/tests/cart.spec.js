@@ -1,97 +1,122 @@
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick } from 'vue'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCartStore } from '../src/stores/cart'
 
-const productA = { id: 1, name: 'Kopi', price: 25000, stock: 10 }
-const productB = { id: 2, name: 'Teh', price: 15000, stock: 10 }
+const jsonResponse = (body, ok = true, status = 200) => ({
+  ok,
+  status,
+  json: async () => body,
+})
+
+// Bentuk respons server: { data: [{product_id, name, price, quantity, stock}] }
+const serverCart = (items) => ({ data: items })
+const kopi = { product_id: 1, name: 'Kopi', price: 25000, quantity: 2, stock: 10 }
 
 beforeEach(() => {
   setActivePinia(createPinia())
-  localStorage.clear()
 })
 
-describe('cart store', () => {
-  it('starts empty', () => {
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+describe('cart store (server-side)', () => {
+  it('starts empty — no localStorage hydration anymore', () => {
     const cart = useCartStore()
     expect(cart.items).toEqual([])
     expect(cart.count).toBe(0)
     expect(cart.total).toBe(0)
   })
 
-  it('add: item baru masuk, add lagi quantity-nya digabung', () => {
+  it('fetch loads cart from GET /api/v1/cart', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(serverCart([kopi])))
+    vi.stubGlobal('fetch', fetchMock)
+
     const cart = useCartStore()
+    await cart.fetch()
 
-    cart.add(productA, 2)
-    cart.add(productA, 3)
-    cart.add(productB)
-
-    expect(cart.items).toHaveLength(2)
-    expect(cart.items[0].quantity).toBe(5) // digabung, bukan duplikat baris
-    expect(cart.count).toBe(6)
-  })
-
-  it('getters total mengikuti perubahan quantity', () => {
-    const cart = useCartStore()
-
-    cart.add(productA, 2) // 50.000
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/cart')
+    expect(cart.items).toEqual([kopi])
+    expect(cart.count).toBe(2)
     expect(cart.total).toBe(50000)
-
-    cart.setQuantity(1, 1)
-    expect(cart.total).toBe(25000)
   })
 
-  it('setQuantity < 1 menghapus item (keputusan UX eksplisit)', () => {
+  it('add posts product_id + quantity and replaces items from response', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(serverCart([kopi])))
+    vi.stubGlobal('fetch', fetchMock)
+
     const cart = useCartStore()
-    cart.add(productA)
+    await cart.add(1, 2)
 
-    cart.setQuantity(1, 0)
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/v1/cart/items')
+    expect(JSON.parse(init.body)).toEqual({ product_id: 1, quantity: 2 })
+    expect(cart.items).toEqual([kopi])
+  })
 
+  it('setQuantity PATCHes the absolute quantity', async () => {
+    const updated = { ...kopi, quantity: 5 }
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(serverCart([updated])))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const cart = useCartStore()
+    await cart.setQuantity(1, 5)
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/v1/cart/items/1')
+    expect(init.method).toBe('PATCH')
+    expect(JSON.parse(init.body)).toEqual({ quantity: 5 })
+    expect(cart.items[0].quantity).toBe(5)
+  })
+
+  it('setQuantity < 1 removes the item instead of PATCHing', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(serverCart([])))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const cart = useCartStore()
+    await cart.setQuantity(1, 0)
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/v1/cart/items/1')
+    expect(init.method).toBe('DELETE')
     expect(cart.items).toHaveLength(0)
   })
 
-  it('remove & clear', () => {
+  it('remove DELETEs the row; clear DELETEs the whole cart', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(serverCart([])))
+    vi.stubGlobal('fetch', fetchMock)
+
     const cart = useCartStore()
-    cart.add(productA)
-    cart.add(productB)
+    await cart.remove(1)
+    await cart.clear()
 
-    cart.remove(1)
-    expect(cart.items.map((i) => i.product_id)).toEqual([2])
-
-    cart.clear()
-    expect(cart.items).toHaveLength(0)
+    expect(fetchMock.mock.calls[0][1].method).toBe('DELETE')
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/cart/items/1')
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/v1/cart')
+    expect(fetchMock.mock.calls[1][1].method).toBe('DELETE')
   })
 
-  it('add & setQuantity di-clamp ke stok (qty tidak boleh melebihi)', () => {
+  it('all requests carry the session cookie (credentials include)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(serverCart([])))
+    vi.stubGlobal('fetch', fetchMock)
+
     const cart = useCartStore()
-    const limited = { id: 3, name: 'Gula', price: 5000, stock: 2 }
+    await cart.fetch()
+    await cart.add(1)
 
-    cart.add(limited, 5)
-    expect(cart.items[0].quantity).toBe(2)
-
-    cart.add(limited)
-    expect(cart.items[0].quantity).toBe(2)
-
-    cart.setQuantity(3, 99)
-    expect(cart.items[0].quantity).toBe(2)
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(init.credentials).toBe('include')
+    }
   })
 
-  it('persists to localStorage via watch (deep)', async () => {
+  it('server validation error rethrows (out of stock)', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      jsonResponse({ message: 'Stok Kopi habis.', errors: { quantity: ['Stok Kopi habis.'] } }, false, 422),
+    ))
+
     const cart = useCartStore()
 
-    cart.add(productA, 2)
-    await nextTick() // watch default flush: 'post' — tunggu render cycle
-
-    expect(JSON.parse(localStorage.getItem('lab_cart'))).toEqual([
-      { product_id: 1, name: 'Kopi', price: 25000, quantity: 2, stock: 10 },
-    ])
-  })
-
-  it('restores state from corrupted localStorage safely', () => {
-    localStorage.setItem('lab_cart', '{rusak')
-
-    // Store merehydrate saat pertama dipakai — gak boleh crash
-    const cart = useCartStore()
-    expect(cart.items).toEqual([])
+    await expect(cart.add(1)).rejects.toThrow('Stok Kopi habis.')
+    expect(cart.items).toHaveLength(0) // state tidak berubah saat gagal
   })
 })

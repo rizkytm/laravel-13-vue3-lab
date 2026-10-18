@@ -1,73 +1,63 @@
 import { defineStore } from 'pinia'
-import { computed, ref, watch } from 'vue'
-import type { CartItem, Product } from '../types'
+import { computed, ref } from 'vue'
+import { api } from '../api'
+import type { CartItem } from '../types'
 
 /**
- * Cart store — gaya "setup store" (Composition API di dalam store):
- * state = ref, getter = computed, action = fungsi biasa.
- * Kontras Vuex: gak ada mutation, action langsung mutasi state,
- * gak ada module boilerplate.
+ * Cart store — keranjang SERVER-SIDE (tahap 3).
+ * State = cache dari tabel cart_items; setiap action memanggil API lalu
+ * ME-REPLACE items dengan cart penuh dari respons — satu sumber kebenaran
+ * (server), tidak ada logika merge/clamp di client lagi.
+ *
+ * Gaya "setup store" (Composition API di dalam store): state = ref,
+ * getter = computed, action = fungsi biasa.
  */
 export const useCartStore = defineStore('cart', () => {
   // --- State ---
-  // localStorage = persistence eksternal → treat sebagai input tak terpercaya
-  const items = ref<CartItem[]>(loadSaved())
+  const items = ref<CartItem[]>([])
 
   // --- Getters (computed: cache by dependency) ---
   const count = computed(() => items.value.reduce((n, i) => n + i.quantity, 0))
   const total = computed(() => items.value.reduce((n, i) => n + i.price * i.quantity, 0))
 
-  // --- Actions ---
-  function add(product: Product, quantity = 1): void {
-    const existing = items.value.find((i) => i.product_id === product.id)
-    if (existing) {
-      // Clamp ke stok — qty tidak boleh melebihi yang tersedia
-      existing.quantity = Math.min(existing.quantity + quantity, product.stock)
-    } else {
-      items.value.push({
-        product_id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: Math.min(quantity, product.stock),
-        stock: product.stock,
-      })
-    }
+  // --- Actions (semua async — server yang menghitung clamp stok) ---
+  async function fetch(): Promise<void> {
+    const res = await api.raw<{ data: CartItem[] }>('/cart')
+    items.value = res.data
   }
 
-  function setQuantity(productId: number, quantity: number): void {
+  async function add(productId: number, quantity = 1): Promise<void> {
+    const res = await api.raw<{ data: CartItem[] }>('/cart/items', {
+      method: 'POST',
+      body: { product_id: productId, quantity },
+    })
+    items.value = res.data
+  }
+
+  async function setQuantity(productId: number, quantity: number): Promise<void> {
+    // quantity < 1 = keputusan UX "hapus item" (konsisten dengan versi localStorage)
     if (quantity < 1) {
-      remove(productId)
+      await remove(productId)
       return
     }
-    const item = items.value.find((i) => i.product_id === productId)
-    if (item) {
-      item.quantity = Math.min(quantity, item.stock)
-    }
+    const res = await api.raw<{ data: CartItem[] }>(`/cart/items/${productId}`, {
+      method: 'PATCH',
+      body: { quantity },
+    })
+    items.value = res.data
   }
 
-  function remove(productId: number): void {
-    items.value = items.value.filter((i) => i.product_id !== productId)
+  async function remove(productId: number): Promise<void> {
+    const res = await api.raw<{ data: CartItem[] }>(`/cart/items/${productId}`, {
+      method: 'DELETE',
+    })
+    items.value = res.data
   }
 
-  function clear(): void {
-    items.value = []
+  async function clear(): Promise<void> {
+    const res = await api.raw<{ data: CartItem[] }>('/cart', { method: 'DELETE' })
+    items.value = res.data
   }
 
-  // --- Side effect via watch: persist setiap state berubah ---
-  // watch (bukan watchEffect): dependensi eksplisit = items saja,
-  // deep karena mutasi terjadi di dalam array (push, properti quantity)
-  watch(items, (value) => localStorage.setItem('lab_cart', JSON.stringify(value)), {
-    deep: true,
-  })
-
-  return { items, count, total, add, setQuantity, remove, clear }
+  return { items, count, total, fetch, add, setQuantity, remove, clear }
 })
-
-function loadSaved(): CartItem[] {
-  try {
-    const parsed: unknown = JSON.parse(localStorage.getItem('lab_cart') || '[]')
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : []
-  } catch {
-    return [] // JSON korup → reset, jangan crash
-  }
-}

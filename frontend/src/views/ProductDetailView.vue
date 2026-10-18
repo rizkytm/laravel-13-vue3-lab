@@ -61,7 +61,9 @@ const inCartQty = computed(
 )
 
 function addToCart(): void {
-  if (product.value) cart.add(product.value)
+  // Server otoritatif: clamp stok + persist ke cart_items — client cukup
+  // kirim id produk; badge nav ikut berubah setelah respons mengganti items
+  if (product.value) void cart.add(product.value.id)
 }
 </script>
 

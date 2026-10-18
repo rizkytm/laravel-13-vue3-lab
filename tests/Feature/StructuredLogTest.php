@@ -14,12 +14,11 @@ it('attaches request id context and logs structured checkout', function () {
 
     $user = User::factory()->create();
     $product = Product::factory()->create(['stock' => 5]);
+    $user->cartItems()->create(['product_id' => $product->id, 'quantity' => 1]);
     Sanctum::actingAs($user);
 
     $this->withHeader('X-Request-Id', 'trace-abc-123')
-        ->postJson('/api/v1/checkout', [
-            'items' => [['product_id' => $product->id, 'quantity' => 1]],
-        ])
+        ->postJson('/api/v1/checkout')
         ->assertCreated();
 
     // Middleware menanam correlation id ke log context request ini

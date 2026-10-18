@@ -13,22 +13,18 @@ const { t } = useI18n()
 const { loading, error, execute } = useApi<{ data: Order; message: string }>()
 
 /**
- * Checkout penuh: cart (localStorage) → POST /api/v1/checkout →
- * backend transaksi + queue payment. Sukses → keranjang dikosongkan
- * dan pindah ke halaman pesanan (status 'pending', jadi 'paid' oleh worker).
+ * Checkout: POST /api/v1/checkout TANPA payload items — backend membaca
+ * cart server-side (tabel cart_items). Sukses → refresh cart (sudah
+ * dikosongkan backend) dan pindah ke halaman pesanan (status 'pending',
+ * jadi 'paid' oleh worker).
  */
 async function checkout(): Promise<void> {
   const result = await execute(() =>
-    api.post<{ data: Order; message: string }>('/checkout', {
-      items: cart.items.map((i) => ({
-        product_id: i.product_id,
-        quantity: i.quantity,
-      })),
-    }),
+    api.post<{ data: Order; message: string }>('/checkout'),
   )
 
   if (result) {
-    cart.clear()
+    await cart.fetch() // cart sudah dikosongkan backend dalam transaksi
     router.push({ name: 'orders' })
   }
 }
@@ -36,7 +32,7 @@ async function checkout(): Promise<void> {
 // Handler eksplisit (bukan $event.target di template) — cast aman di satu tempat
 function onQtyChange(productId: number, event: Event): void {
   const value = Number((event.target as HTMLInputElement).value)
-  cart.setQuantity(productId, value)
+  void cart.setQuantity(productId, value)
 }
 </script>
 
@@ -107,7 +103,7 @@ function onQtyChange(productId: number, event: Event): void {
           <button
             :data-testid="`remove-${item.product_id}`"
             class="cursor-pointer border-0 bg-transparent p-0 text-sm text-ink-muted hover:text-danger"
-            @click="cart.remove(item.product_id)"
+            @click="void cart.remove(item.product_id)"
           >
             {{ t('cart.remove') }}
           </button>
@@ -137,7 +133,7 @@ function onQtyChange(productId: number, event: Event): void {
     <button
       data-testid="clear-cart"
       class="cursor-pointer rounded-md border border-line bg-raised px-4 py-2 text-ink hover:border-ink-muted"
-      @click="cart.clear()"
+      @click="void cart.clear()"
     >
       {{ t('cart.clear') }}
     </button>

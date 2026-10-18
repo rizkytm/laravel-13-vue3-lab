@@ -29,7 +29,8 @@ it('returns consistent json message for api 403', function () {
 it('keeps validation errors in standard shape', function () {
     Sanctum::actingAs(User::factory()->create());
 
-    $this->postJson('/api/v1/checkout', ['items' => []])
+    // Cart server kosong → 422 dari EnsureCartNotEmpty, bentuk tetap {message, errors}
+    $this->postJson('/api/v1/checkout')
         ->assertStatus(422)
         ->assertJsonStructure(['message', 'errors']);
 });
