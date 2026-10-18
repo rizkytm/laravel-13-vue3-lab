@@ -14,12 +14,21 @@ class CleanupStaleOrders extends Command
 
     public function handle(): int
     {
-        // Bulk update — hemat query. Event model tidak fire per baris,
-        // di sini memang tidak butuh.
-        $cancelled = Order::query()
+        // Per-order (bukan bulk update) karena cancel() = status machine +
+        // KEMBALIKAN stok dengan jejak movement — tidak ada stok hilang
+        // tanpa jejak saat order menggantung dibatalkan otomatis.
+        $stale = Order::query()
             ->where('status', OrderStatus::Pending)
             ->where('created_at', '<', now()->subHours((int) $this->option('hours')))
-            ->update(['status' => OrderStatus::Cancelled]);
+            ->get();
+
+        $cancelled = 0;
+
+        foreach ($stale as $order) {
+            if ($order->cancel('Order pending kedaluwarsa (cleanup)')) {
+                $cancelled++;
+            }
+        }
 
         $this->info("{$cancelled} order pending dibatalkan.");
 

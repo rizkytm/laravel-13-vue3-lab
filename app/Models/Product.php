@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\MovementType;
+use App\Services\InventoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -41,6 +42,20 @@ class Product extends Model
     {
         static::creating(function (Product $product) {
             $product->slug ??= Str::slug($product->name).'-'.Str::lower(Str::random(4));
+        });
+
+        // Stok awal = gerakan 'in' pertama — invariant SUM(movements) == stock
+        // berlaku sejak baris pertama, bukan hanya untuk stok yang lewat service.
+        static::created(function (Product $product) {
+            if ($product->stock > 0) {
+                InventoryMovement::create([
+                    'product_id' => $product->id,
+                    'type' => MovementType::In,
+                    'quantity' => $product->stock,
+                    'stock_after' => $product->stock,
+                    'reason' => 'Stok awal',
+                ]);
+            }
         });
 
         // Cache invalidation via VERSION STAMP: key cache menyertakan versi,
@@ -84,35 +99,28 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    /**
-     * Kurangi stok aman dari race condition.
-     * lockForUpdate: baris DIKUNCI sampai transaction selesai —
-     * dua request paralel tidak bisa baca stok yang sama lalu oversell.
-     * Baca → cek → tulis harus dalam SATU transaction.
-     */
-    public function buy(int $quantity): bool
+    /** Riwayat perubahan stok — sumber kebenaran audit (lihat InventoryService). */
+    public function movements(): HasMany
     {
-        return DB::transaction(function () use ($quantity): bool {
-            $stock = static::query()
-                ->whereKey($this->getKey())
-                ->lockForUpdate()
-                ->value('stock');
+        return $this->hasMany(InventoryMovement::class);
+    }
 
-            if ($stock < $quantity) {
-                return false;
-            }
-
-            static::query()
-                ->whereKey($this->getKey())
-                ->update(['stock' => $stock - $quantity]);
-
-            $this->refresh();
-
-            return true;
-        });
-        // CATATAN: event StockUpdated TIDAK di-fire di sini — buy() bisa
-        // dipanggil DALAM transaction yang lebih besar (checkout M4).
-        // Fire event setelah commit = tanggung jawab caller (lihat
-        // ProductController@buy & Api CheckoutController).
+    /**
+     * Kurangi stok aman dari race condition — delegasi ke InventoryService
+     * (lockForUpdate + jejak movement). Return false bila stok kurang.
+     *
+     * CATATAN: event StockUpdated TIDAK di-fire di sini — buy() bisa
+     * dipanggil DALAM transaction yang lebih besar (checkout M4).
+     * Fire event setelah commit = tanggung jawab caller (lihat
+     * ProductController@buy & Api CheckoutController).
+     */
+    public function buy(int $quantity, ?Order $order = null): bool
+    {
+        return app(InventoryService::class)->decrement(
+            $this,
+            $quantity,
+            $order ? "Checkout order #{$order->getKey()}" : 'Pembelian langsung',
+            $order,
+        );
     }
 }

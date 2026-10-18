@@ -41,8 +41,9 @@ class ProcessPayment implements ShouldQueue
 
         $transactionId = $gateway->charge($this->order->total);
 
-        $this->order->update([
-            'status' => OrderStatus::Paid,
+        // Lewat status machine — pending → paid satu-satunya jalan yang sah
+        // (transisi lain mengembalikan false dan status tidak berubah).
+        $this->order->transitionTo(OrderStatus::Paid, [
             'transaction_id' => $transactionId,
             'paid_at' => now(),
         ]);
@@ -54,7 +55,7 @@ class ProcessPayment implements ShouldQueue
      */
     public function failed(?Throwable $exception): void
     {
-        $this->order->update(['status' => OrderStatus::Failed]);
+        $this->order->transitionTo(OrderStatus::Failed);
 
         Log::error('Payment permanently failed', [
             'order_id' => $this->order->id,

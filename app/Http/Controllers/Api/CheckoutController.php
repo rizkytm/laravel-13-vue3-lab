@@ -50,7 +50,7 @@ class CheckoutController extends Controller
                 // SELURUH order (item pertama yang sudah dibuat ikut dibatalkan).
                 $product = Product::query()->findOrFail($item['product_id']);
 
-                if (! $product->buy($item['quantity'])) {
+                if (! $product->buy($item['quantity'], $order)) {
                     throw ValidationException::withMessages([
                         'items' => "Stok {$product->name} tidak mencukupi.",
                     ]);

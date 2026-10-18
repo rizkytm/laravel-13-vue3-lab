@@ -6,15 +6,16 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Tanpa WithoutModelEvents: hook Product::created mencatat gerakan
+     * 'in' stok awal — invariant SUM(inventory_movements) == stock
+     * berlaku juga untuk data seed.
      */
     public function run(): void
     {
