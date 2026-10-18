@@ -44,5 +44,19 @@ class AppServiceProvider extends ServiceProvider
                 strtolower($request->input('email')).'|'.$request->ip()
             );
         });
+
+        // Register: 3/menit per IP — cukup untuk manusia, mempersulit
+        // pembuatan akun massal otomatis
+        RateLimiter::for('register', function (Request $request) {
+            return Limit::perMinute(3)->by($request->ip());
+        });
+
+        // Password reset (forgot + reset): 3/menit per email+ip —
+        // cegah email flood ke satu alamat & brute-force token
+        RateLimiter::for('password', function (Request $request) {
+            return Limit::perMinute(3)->by(
+                strtolower($request->input('email')).'|'.$request->ip()
+            );
+        });
     }
 }

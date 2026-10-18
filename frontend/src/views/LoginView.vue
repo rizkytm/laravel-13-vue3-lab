@@ -124,6 +124,24 @@ async function submit(): Promise<void> {
     </form>
 
     <p class="mt-4 text-sm text-ink-muted">
+      {{ t('login.noAccount') }}
+      <RouterLink
+        :to="{ name: 'register' }"
+        class="text-accent hover:underline"
+      >
+        {{ t('login.registerLink') }}
+      </RouterLink>
+    </p>
+    <p class="mt-2 text-sm text-ink-muted">
+      <RouterLink
+        :to="{ name: 'forgot-password' }"
+        class="text-accent hover:underline"
+      >
+        {{ t('login.forgotLink') }}
+      </RouterLink>
+    </p>
+
+    <p class="mt-4 text-sm text-ink-muted">
       Demo: <span class="font-mono">test@example.com</span> / <span class="font-mono">password</span>
     </p>
   </div>

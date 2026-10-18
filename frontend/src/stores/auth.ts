@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { clearToken, request, spaLogin, spaLogout } from '../api'
+import { clearToken, request, spaLogin, spaLogout, spaRegister } from '../api'
 import type { ApiError, User } from '../types'
 
 /**
@@ -37,6 +37,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function register(name: string, email: string, password: string): Promise<void> {
+    await spaRegister(name, email, password) // csrf-cookie → POST /register (session)
+    await fetchUser()
+    if (!user.value) {
+      const error = new Error('Registrasi gagal.') as ApiError
+      error.status = 422
+      throw error
+    }
+  }
+
   async function logout(): Promise<void> {
     try {
       await spaLogout() // POST /logout — invalidate session + CSRF baru
@@ -46,5 +56,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, fetchUser, login, logout }
+  return { user, fetchUser, login, register, logout }
 })

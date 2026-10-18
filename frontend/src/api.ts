@@ -100,9 +100,9 @@ async function parseOrThrow(res: Response): Promise<unknown> {
 }
 
 // SPA login → endpoint WEB (session), bukan /api/token
-export async function spaLogin(email: string, password: string): Promise<void> {
+async function spaPost(path: string, body: unknown): Promise<unknown> {
   await csrf()
-  const res = await fetch('/login', {
+  const res = await fetch(path, {
     method: 'POST',
     credentials: 'include',
     // Jangan follow 302: targetnya rute SPA (/orders dst) yang dilayani
@@ -110,13 +110,34 @@ export async function spaLogin(email: string, password: string): Promise<void> {
     // Sukses/gagal login SAMA-SAMA 302 → dibuktikan GET /api/user oleh auth store.
     redirect: 'manual',
     headers: authHeaders(),
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   })
   // opaqueredirect (browser) / 3xx mentah (impl lain) = redirect diterima
   if (res.type === 'opaqueredirect' || (res.status >= 300 && res.status < 400)) {
-    return
+    return null
   }
-  await parseOrThrow(res)
+  return parseOrThrow(res)
+}
+
+export async function spaLogin(email: string, password: string): Promise<void> {
+  await spaPost('/login', { email, password })
+}
+
+export async function spaRegister(name: string, email: string, password: string): Promise<void> {
+  await spaPost('/register', { name, email, password, password_confirmation: password })
+}
+
+// Password reset (respons JSON 202/422, tanpa redirect)
+export async function spaForgotPassword(email: string): Promise<{ message: string }> {
+  return spaPost('/forgot-password', { email }) as Promise<{ message: string }>
+}
+
+export async function spaResetPassword(token: string, email: string, password: string): Promise<void> {
+  await spaPost('/reset-password', { token, email, password, password_confirmation: password })
+}
+
+export async function spaResendVerification(): Promise<{ message: string }> {
+  return spaPost('/email/verification-notification', {}) as Promise<{ message: string }>
 }
 
 export async function spaLogout(): Promise<void> {

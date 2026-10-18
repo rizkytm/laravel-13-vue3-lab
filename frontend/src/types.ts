@@ -26,6 +26,8 @@ export interface User {
   name: string
   email: string
   phone?: string | null
+  /** ISO datetime; null = email belum diverifikasi */
+  email_verified_at?: string | null
 }
 
 export interface OrderItem {

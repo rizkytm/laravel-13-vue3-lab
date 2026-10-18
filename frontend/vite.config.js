@@ -2,14 +2,18 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig, loadEnv } from 'vite'
 
-// GET /login = halaman SPA (deep-link & reload) — jangan kena proxy ke Laravel
-// blade. POST /login (form/JSON) tetap diteruskan oleh proxy di bawah.
-function spaLoginRoute() {
+// GET halaman auth = halaman SPA (deep-link & reload) — jangan kena proxy ke
+// Laravel. POST-nya (/login, /register, dst) tetap diteruskan oleh proxy di bawah.
+// Catatan: req.url di-reset ke index.html tapi URL browser TETAP asli
+// (termasuk query ?token=..&email=.. untuk /reset-password) — SPA baca dari
+// window.location, jadi parameter tautan email tetap sampai ke Vue Router.
+function spaAuthRoutes() {
+  const spaPaths = ['/login', '/register', '/forgot-password', '/reset-password']
   return {
-    name: 'spa-login-route',
+    name: 'spa-auth-routes',
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
-        if (req.method === 'GET' && req.url?.startsWith('/login')) {
+        if (req.method === 'GET' && spaPaths.some((p) => req.url?.startsWith(p))) {
           req.url = '/index.html'
         }
         next()
@@ -24,7 +28,7 @@ export default defineConfig(({ mode }) => {
   const backend = env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
   return {
-    plugins: [vue(), tailwindcss(), spaLoginRoute()],
+    plugins: [vue(), tailwindcss(), spaAuthRoutes()],
     server: {
       proxy: {
         // Dev: rute Laravel diteruskan ke backend dari VITE_BACKEND_URL.
@@ -36,6 +40,12 @@ export default defineConfig(({ mode }) => {
         '/sanctum': { target: backend, changeOrigin: false },
         '/login': { target: backend, changeOrigin: false },
         '/logout': { target: backend, changeOrigin: false },
+        // Tahap 1 — auth SPA: POST register & password reset, link verifikasi
+        // (/email/verify/.. SIGNED) dibuka browser langsung dari email.
+        '/register': { target: backend, changeOrigin: false },
+        '/forgot-password': { target: backend, changeOrigin: false },
+        '/reset-password': { target: backend, changeOrigin: false },
+        '/email': { target: backend, changeOrigin: false },
         // Invoice signed URL dibuka dari SPA (host :5173, ikut di-sign untuk
         // host itu) — harus diteruskan ke backend, bukan jatuh ke SPA fallback.
         // Regex: HANYA /orders/*/invoice — /orders dan /orders/:id tetap SPA.

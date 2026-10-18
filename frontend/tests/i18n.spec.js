@@ -10,6 +10,9 @@ async function mountLogin() {
     history: createMemoryHistory(),
     routes: [
       { path: '/login', name: 'login', component: LoginView },
+      // LoginView menautkan ke halaman ini — router test butuh stub-nya
+      { path: '/register', name: 'register', component: { template: '<div>register</div>' } },
+      { path: '/forgot-password', name: 'forgot-password', component: { template: '<div>forgot</div>' } },
       { path: '/', name: 'products', component: { template: '<div>products</div>' } },
     ],
   })
