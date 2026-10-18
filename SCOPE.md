@@ -16,15 +16,23 @@ fitur e-commerce production grade" di PROGRESS menunjuk file ini.
    transisi.
 4. **Payment gateway** — interface tetap, driver `midtrans` (atau sejenis)
    contoh nyata: snap/redirect + callback webhook diverifikasi signature.
-   Fake tetap untuk test.
+   Fake tetap untuk test. Akun Midtrans TIDAK wajib — driver diuji dengan
+   `Http::fake` terhadap kontrak API Snap + signature webhook; akun
+   sandbox (gratis) opsional kalau mau tes end-to-end sungguhan.
 5. **Inventory movement** — `inventory_movements` (in/out/adjust + reason),
    stok tidak pernah diubah tanpa jejak; stok dihitung dari movement.
+6. **Password reset + email verification** — laravel prompt: forgot/reset
+   password (token + expiry + hashing) + verifikasi email saat register.
+   Mail tetap log driver. Menutup gap "fitur password belum ada"
+   (PROGRESS + ASVS_AUDIT).
 
 ### P2 — Pelengkap
 
-6. **Refund** — flow refund terkait transisi status + payment gateway.
-7. **Stok realtime** — broadcasting `StockUpdated` disubscribe frontend
+7. **Refund** — flow refund terkait transisi status + payment gateway.
+8. **Stok realtime** — broadcasting `StockUpdated` disubscribe frontend
    (Reverb/Pusher) — SPA tampil stok tanpa refresh.
+9. **Cancel order oleh customer** — endpoint + tombol cancel untuk order
+   `pending` (memakai transisi cancelled dari status machine).
 
 ### Admin dashboard — Filament (disepakati terpisah)
 
@@ -44,12 +52,31 @@ fitur e-commerce production grade" di PROGRESS menunjuk file ini.
 
 ## Urutan implementasi yang disarankan
 
-Register → Filament (butuh admin) → inventory movement + state machine →
-keranjang server-side → payment gateway → refund → stok realtime.
+1. Register + password reset + email verification (satu area: autentikasi)
+2. Order status machine + inventory movement (domain inti — semua fitur
+   lain: payment, refund, Filament, stok realtime bergantung ke sini)
+3. Keranjang server-side + rate limit checkout (checkout tetap validasi
+   stok)
+4. Payment gateway Midtrans (butuh transisi pending → paid yang tervalidasi)
+5. Refund (butuh status machine + gateway)
+6. Filament admin (butuh domain final — Order resource sekalian pakai
+   transisi status + `users.is_admin` + policy)
+7. Stok realtime (inventory movement jadi sumber kebenaran stok)
+8. Cancel order oleh customer (butuh status machine — kecil, bisa kapan
+   saja setelah tahap 2)
+
+Prinsip: domain → integrasi eksternal → UI/admin → real-time.
 Tiap tahap = 1 commit + test, jangan dikerjakan sekaligus.
 
 ## Definisi selesai
 
 - Semua item P1 + P2 + Filament lulus test + verifikasi manual
-- ASVS gap prioritas dari `ASVS_AUDIT.md` nomor 1-5, 8-9 ikut diperbaiki saat
-  menyentuh area terkait (minimal: headers, rate limit checkout, cache-control)
+- ASVS gap prioritas dari `ASVS_AUDIT.md` ikut diperbaiki — sudah
+  terpetakan di scope di atas:
+  - fitur password (reset/ubah) → P1 butir 1 + 6
+  - rate limit checkout → urutan tahap 3
+  - security headers (HSTS, CSP, nosniff, dll) → middleware, dikerjakan
+    saat fase hardening akhir
+  - cache-control → dikerjakan bersama security headers
+  Sisanya (cookie Secure, HTTPS, token storage, log auth, antivirus
+  upload) tetap catatan hardening produksi, tidak memblokir selesai.
