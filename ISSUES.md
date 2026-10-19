@@ -85,9 +85,12 @@ Guest tetap diizinkan; `auth.user` dicek via `/api/user` kalau state belum ada.
 
 ## Enhancement yang menyusul
 
-- Toggle password: teks → ikon SVG eye / eye-off (aria-label dipertahankan)
-- Base URL pindah ke env: `frontend/.env` → `VITE_BACKEND_URL` (target proxy),
-  `VITE_API_BASE` (prefix API) + `.env.example`
+- ~~Toggle password: teks → ikon SVG eye / eye-off (aria-label dipertahankan)~~
+  — **SELESAI**: `LoginView` sudah pakai `<svg>` + aria-label ("Lihat/
+  Sembunyikan password"), dijaga e2e `auth.spec` (regresi ISSUES #2).
+- Base URL pindah ke env: `frontend/.env` → `VITE_BACKEND_URL` (target proxy)
+  **SUDAH** dipakai `vite.config.js`; **MASIH open**: `VITE_API_BASE` (prefix
+  `/api/v1` masih hardcode di `frontend/src/api.ts`) + `.env.example`.
 
 ---
 

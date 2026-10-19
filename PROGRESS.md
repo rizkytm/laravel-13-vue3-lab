@@ -35,7 +35,7 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | T3 — Keranjang server-side + rate limit checkout | ✅ | `feat(cart)` | +10 PHP: cart_items per user, server otoritatif clamp, checkout baca cart DB + clear dalam transaksi, throttle checkout 10/mnt |
 | T4 — Payment gateway Midtrans | ✅ | `feat(payment+admin)` | +9 PHP: MidtransPaymentGateway (Snap Http::fake + verifySignature sha512), webhook publik diverifikasi signature → transisi paid, idempoten |
 | T5 — Refund | ✅ | `feat(payment+admin)` | +8 PHP: status Refunded (paid→refunded), RefundablePaymentGateway (ISP), RefundService uang-dulu-status-sesudah |
-| T6 — Filament admin (v4) | ✅ | `feat(payment+admin)` | +5 PHP: panel /admin hanya is_admin, resource Order (aksi via machine)/Product (stok read-only)/User (toggle admin) |
+| T6 — Filament admin (v4) | ✅ | `feat(payment+admin)` | +5 PHP: panel /admin hanya is_admin, resource Order (aksi via machine)/Product (stok read-only)/User (toggle admin). **Sisa: dashboard widget (SCOPE) belum — lihat catatan bawah** |
 | T7 — Stok realtime | ✅ | `feat(payment+admin)` | +6 Vitest: realtime.ts subscribe StockUpdated, graceful no-op tanpa broadcaster, cart.applyStockUpdate clamp qty |
 | T8 — Cancel order customer | ✅ | `feat(payment+admin)` | +6 PHP +2 Vitest: POST /orders/{id}/cancel + policy (pemilik+pending), tombol SPA, restock berjejak |
 | H — Hardening ASVS (headers + cache-control) | ✅ | `feat(security)` | +7 PHP +3 e2e: middleware global AddSecurityHeaders (HSTS, nosniff, Referrer-Policy, X-Frame-Options, CSP sebagian) + no-store + CORS ketat; CSP tanpa script-src (Filament tanpa nonce) |
@@ -46,6 +46,8 @@ Test terakhir: **195 passed (PHP) + 71 passed (Vitest) + 16 passed (Playwright e
 **Seluruh implementasi selesai (M1-M8 + F1-F4 + scope T1-T8 + hardening H + e2e + CI & ASVS lanjutan)** — lihat `git log`.
 Cara jalankan semua suite: `make test` (PHP+Vitest); e2e: lihat prasyarat di `FEATURES.md` section I.
 Scope e-commerce production grade (SCOPE.md) lulus penuh; deviasi tercatat di SCOPE.md.
+**Sisa scope non-ASVS:** dashboard widget Filament (pendapatan, order/status,
+stok menipis) — terlewat saat tahap 6, tercatat di SCOPE bagian Admin.
 Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).
 
 Run test frontend: `cd frontend && npm test`. Dev: 2 server (`php artisan serve` +

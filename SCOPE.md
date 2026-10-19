@@ -63,6 +63,8 @@ dicatat (jujur, bukan scope creep):
 - Resource: **Product** (CRUD + stok), **Order** (list + detail + ubah status
   sesuai state machine), **User** (opsional).
 - Dashboard widget: pendapatan, order per status, stok menipis.
+  **⚠️ BELUM dikerjakan (terlewat saat tahap 6 — 2026-10-19 terdeteksi;
+  panel masih widget default Filament). Ini satu-satunya sisa item scope.**
 - Akses: kolom `users.is_admin`, panel di `/admin` + policy — bukan package
   role/permission penuh (nanti kalau perlu).
 
