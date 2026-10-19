@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\MovementType;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -7,6 +8,7 @@ use App\Models\Product;
 use App\Services\Payment\FakePaymentGateway;
 use App\Services\Payment\MidtransPaymentGateway;
 use App\Services\Payment\PaymentGateway;
+use App\Services\Payment\RefundablePaymentGateway;
 use App\Services\RefundService;
 use Illuminate\Support\Facades\Http;
 
@@ -45,7 +47,7 @@ it('refunds a paid order: gateway called, status refunded, stock restocked with 
 
     // Jejak movement 'in' terkait order
     $movement = $product->movements()->latest('id')->first();
-    expect($movement->type)->toBe(App\Enums\MovementType::In)
+    expect($movement->type)->toBe(MovementType::In)
         ->and($movement->quantity)->toBe(2)
         ->and($movement->order_id)->toBe($order->id)
         ->and($movement->stock_after)->toBe(5);
@@ -88,7 +90,7 @@ it('does not change status when gateway refuses the refund', function () {
             return false;
         }
     };
-    $this->app->instance(App\Services\Payment\RefundablePaymentGateway::class, $gateway);
+    $this->app->instance(RefundablePaymentGateway::class, $gateway);
 
     expect(app(RefundService::class)->refund($order))->toBeFalse();
 

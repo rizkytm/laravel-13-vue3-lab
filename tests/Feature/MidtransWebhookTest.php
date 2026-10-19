@@ -1,8 +1,11 @@
 <?php
 
 use App\Enums\OrderStatus;
+use App\Jobs\ProcessPayment;
 use App\Models\Order;
 use App\Services\Payment\MidtransPaymentGateway;
+use App\Services\Payment\PaymentGateway;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 // Tahap 4 — driver Midtrans: kontrak Snap (Http::fake) + webhook signature.
@@ -72,7 +75,7 @@ it('throws on snap API error (jangan telan error diam-diam)', function () {
     ]);
 
     expect(fn () => app(MidtransPaymentGateway::class)->charge(50000))
-        ->toThrow(Illuminate\Http\Client\RequestException::class);
+        ->toThrow(RequestException::class);
 });
 
 it('marks order paid on valid settlement webhook', function () {
@@ -98,7 +101,7 @@ it('processpayment leaves async-gateway order pending — webhook is the authori
 
     $order = Order::factory()->create(['status' => OrderStatus::Pending, 'total' => 40000]);
 
-    (new \App\Jobs\ProcessPayment($order))->handle(app(\App\Services\Payment\PaymentGateway::class));
+    (new ProcessPayment($order))->handle(app(PaymentGateway::class));
 
     $order->refresh();
     expect($order->status)->toBe(OrderStatus::Pending)      // JANGAN paid
@@ -114,7 +117,7 @@ it('still marks paid synchronously for the fake (sync) gateway', function () {
     // Regresi arah sebaliknya: jalur lama (fake driver) tidak boleh rusak
     $order = Order::factory()->create(['status' => OrderStatus::Pending, 'total' => 40000]);
 
-    (new \App\Jobs\ProcessPayment($order))->handle(app(\App\Services\Payment\PaymentGateway::class));
+    (new ProcessPayment($order))->handle(app(PaymentGateway::class));
 
     expect($order->refresh()->status)->toBe(OrderStatus::Paid)
         ->and($order->paid_at)->not->toBeNull();

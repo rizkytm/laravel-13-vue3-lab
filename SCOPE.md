@@ -104,5 +104,11 @@ Tiap tahap = 1 commit + test, jangan dikerjakan sekaligus.
     butuh nonce (Filament v4 belum dukung).
   - cache-control → dikerjakan bersama security headers → **SELESAI**:
     `Cache-Control: no-store, private` semua response dinamis.
-  Sisanya (cookie Secure, HTTPS, token storage, log auth, antivirus
+  Sisanya (cookie Secure, HTTPS, token storage, antivirus
   upload) tetap catatan hardening produksi, tidak memblokir selesai.
+- **Quick-win lanjutan di luar scope asli (2026-10-19)** — menutup gap ASVS
+  tersisa: **ubah password saat login** (6.2.2), **auth logging** 401/403 +
+  login/logout (16.3.x), **throttle umum API v1** 120/menit (2.4.1), plus
+  **job e2e di CI**. Sisa ❌ yang butuh infra/keputusan: MFA, breach-check
+  password, antivirus upload, cookie Secure/HTTPS, token storage, dokumen
+  formal (SBOM/secrets) — lihat `ASVS_AUDIT.md` prioritas.

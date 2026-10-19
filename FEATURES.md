@@ -531,6 +531,39 @@ cd frontend && npm run test:e2e    # 16 test, jalankan serial (workers:1)
 
 ---
 
+## J. Ubah password & hardening auth (ASVS lanjutan)
+
+- **Kode:**
+  - Ubah password: `POST /change-password` (`routes/web.php`, auth +
+    `throttle:change-password` 5/menit/user), `ChangePasswordRequest`
+    (`current_password` + min:8 + beda dari lama), `ChangePasswordController`,
+    view SPA `ChangePasswordView.vue` (nav "Ganti Password"), proxy
+    `/change-password` di `vite.config.js`
+  - Auth logging: `LoginController` + `bootstrap/app.php` render callback
+  - Throttle API: `RateLimiter::for('api')` 120/menit/user + `throttle:api`
+    di group v1
+- **Langkah tes manual:**
+  1. **Ubah password:** login SPA → nav **"Ganti Password"** → isi 3 field →
+     Simpan. Logout → login dengan **password BARU** (lama ditolak).
+     Coba isi password lama salah → error "Password lama salah."
+  2. **Auth log:** `tail -f storage/logs/laravel.log` lalu login salah →
+     baris `auth.login_failed` (email+ip, **tanpa password**); login benar →
+     `auth.login`; logout → `auth.logout`. Akses API tanpa token →
+     `auth.unauthenticated`.
+  3. **Throttle API:** (opsional) `for i in $(seq 1 121); do curl ...; done` →
+     ke-121 → `429`. Normal usage tak terasa (limit 120/menit).
+- **Harapkan:**
+  - Password lama tetap berlaku bila input salah (perubahan gagal total).
+  - Password baru = password lama → **ditolak**.
+  - Session tetap login setelah ganti password (regenerate, bukan logout).
+  - Log event terstruktur (JSON channel), payload hanya email/user_id/ip/path.
+  - `429` per-user (user lain tak terdampak).
+- **Uji otomatis:** `php artisan test --filter=ChangePasswordTest` (5) +
+  `--filter=AuthLoggingTest` (5) + `--filter=ApiRateLimitTest` (3);
+  `npx vitest run tests/ChangePasswordView.spec.js` (3).
+
+---
+
 ## F. Checklist bug-hunt (dari PROGRESS)
 
 - [x] A1–A6 SPA alur utama — lulus (bugs: A3 slug binding, A4 clamp stok,

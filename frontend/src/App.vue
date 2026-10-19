@@ -85,6 +85,13 @@ function switchLocale(event: Event): void {
           >
             {{ t('nav.orders') }}
           </router-link>
+          <router-link
+            :to="{ name: 'change-password' }"
+            data-testid="nav-change-password"
+            class="text-ink-muted no-underline hover:text-ink"
+          >
+            {{ t('nav.changePassword') }}
+          </router-link>
           <span class="ml-auto text-ink-muted">{{ auth.user.name }}</span>
           <button
             class="cursor-pointer rounded border border-line bg-raised px-2.5 py-1 text-ink hover:border-ink-muted"

@@ -2,6 +2,8 @@
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use Filament\Facades\Filament;
 
@@ -34,9 +36,9 @@ it('redirects guests to the panel login', function () {
 
 it('lets admin cancel a pending order via the domain method (restock + trace)', function () {
     $admin = User::factory()->admin()->create();
-    $product = \App\Models\Product::factory()->create(['stock' => 3]);
+    $product = Product::factory()->create(['stock' => 3]);
     $order = Order::factory()->create(['status' => OrderStatus::Pending]);
-    \App\Models\OrderItem::factory()->create(['order_id' => $order->id, 'product_id' => $product->id, 'quantity' => 2]);
+    OrderItem::factory()->create(['order_id' => $order->id, 'product_id' => $product->id, 'quantity' => 2]);
     $product->buy(2, $order); // stok → 1
 
     // Aksi panel memanggil method domain yang sama

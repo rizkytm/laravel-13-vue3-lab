@@ -45,6 +45,8 @@ export default defineConfig(({ mode }) => {
         '/register': { target: backend, changeOrigin: false },
         '/forgot-password': { target: backend, changeOrigin: false },
         '/reset-password': { target: backend, changeOrigin: false },
+        // ASVS 6.2.2 — ubah password saat login (POST; GET-nya murni SPA)
+        '/change-password': { target: backend, changeOrigin: false },
         '/email': { target: backend, changeOrigin: false },
         // Invoice signed URL dibuka dari SPA (host :5173, ikut di-sign untuk
         // host itu) — harus diteruskan ke backend, bukan jatuh ke SPA fallback.

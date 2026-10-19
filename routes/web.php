@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChangePasswordController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\OrderController;
@@ -33,6 +34,12 @@ Route::post('/logout', [LoginController::class, 'destroy'])->name('logout')->mid
 // Tahap 1 — Register + password reset + verifikasi email (semua session auth,
 // dipakai SPA lewat proxy Vite seperti /login)
 Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register');
+
+// ASVS 6.2.2 — ubah password SAAT LOGIN (berbeda dgn reset di bawah).
+// throttle:change-password → 5/menit per user (lihat AppServiceProvider).
+Route::post('/change-password', [ChangePasswordController::class, 'store'])
+    ->middleware(['auth', 'throttle:change-password'])
+    ->name('change-password.update');
 
 // throttle:password → 3/menit per email+ip — cegah banjir email reset
 Route::post('/forgot-password', [ForgotPasswordController::class, 'store'])->middleware('throttle:password');

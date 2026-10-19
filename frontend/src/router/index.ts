@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
+import ChangePasswordView from '../views/ChangePasswordView.vue'
 import VerifyEmailView from '../views/VerifyEmailView.vue'
 import CartView from '../views/CartView.vue'
 import OrdersView from '../views/OrdersView.vue'
@@ -27,6 +28,7 @@ const routes: RouteRecordRaw[] = [
   // Token & email dibaca dari query string (?token=..&email=..) —
   // tautan di email reset menunjuk ke sini
   { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },
+  { path: '/change-password', name: 'change-password', component: ChangePasswordView, meta: { requiresAuth: true } },
   { path: '/verify-email', name: 'verify-email', component: VerifyEmailView, meta: { requiresAuth: true } },
   { path: '/cart', name: 'cart', component: CartView, meta: { requiresAuth: true } },
   { path: '/orders', name: 'orders', component: OrdersView, meta: { requiresAuth: true } },

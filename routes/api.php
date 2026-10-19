@@ -25,7 +25,10 @@ Route::middleware('auth:sanctum')->get('/user', fn (Request $request) => $reques
 // M4 — API versioned.
 // name prefix 'v1.' mencegah tabrakan nama route dengan web
 // (web sudah punya 'products.index', 'orders.index', dst).
-Route::prefix('v1')->name('v1.')->middleware('auth:sanctum')->group(function () {
+// Semua endpoint v1 di-balik auth + throttle UMUM 120/menit per user
+// (ASVS 2.4.1). Rate limit spesifik — checkout (10), token (5) — tetap
+// berlaku dan lebih ketat.
+Route::prefix('v1')->name('v1.')->middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::apiResource('products', ProductController::class)->only(['index', 'show'])
         // show by slug — konsisten dengan web ({product:slug}) & SPA (route params.slug)
         ->parameters(['products' => 'product:slug']);

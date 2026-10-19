@@ -38,12 +38,17 @@ config/kode/test. Status: ✅ memenuhi · ⚠️ sebagian/belum terverifikasi ·
    HTTP. Plus `__Host-` prefix belum dipakai (❌ 3.3.3).
 3. **HTTPS/TLS belum dikonfigurasi/didokumentasikan** (❌ 12.1.1, 12.2.1):
    dev HTTP semua; belum ada config/dokumen deployment produksi.
-4. **Fitur password belum ada** (❌ 6.2.2, 6.4.3): tidak ada ubah password /
-   reset password. Belum ada MFA (❌ 6.3.3) — Fortify + 2FA (studi larrykonn)
-   menutup ini.
-5. **Rate limit hanya di login** (⚠️ 2.4.1): checkout & API v1 tanpa throttle.
-6. **Auth/authorization tidak dicatat ke log** (⚠️ 16.3.1, 16.3.2): login
-   sukses/gagal, 403 — belum ada event log khusus.
+4. ~~**Fitur password belum ada**~~ — **SELESAI (2026-10-19)**: reset (T1) +
+   **ubah password saat login** (`POST /change-password` + view SPA dari nav
+   + `ChangePasswordTest` 5 + vitest 3). **Sisa:** MFA (❌ 6.3.3) & cek
+   password breach (❌ 6.2.4) — butuh Fortify / layanan eksternal.
+5. ~~**Rate limit hanya di login**~~ — **SELESAI (2026-10-19)**:
+   `throttle:api` 120/menit per user di seluruh group v1 (`ApiRateLimitTest`);
+   checkout 10, register 3, change-password 5 sudah ada sebelumnya.
+6. ~~**Auth/authorization tidak dicatat ke log**~~ — **SELESAI (2026-10-19)**:
+   `auth.login` / `auth.login_failed` / `auth.logout` / `auth.password_changed`
+   / `auth.denied` (403) / `auth.unauthenticated` (401) — terstruktur +
+   `AuthLoggingTest` 5.
 7. **Upload tanpa antivirus scan** (❌ 5.4.3) — disk privat sudah bagus, tapi
    file tidak discan.
 8. **Bearer token di `localStorage`** (⚠️ 14.3.3, ⚠️ 14.3.1): mode token
@@ -86,7 +91,7 @@ client).
 |---|---|---|
 | 2.1.1–2.1.3 | ⚠️ | Aturan validasi hidup di FormRequest + FEATURES.md, belum ada dokumen formal batas bisnis |
 | 2.3.1 | ✅ | Alur checkout terikat user login; cart divalidasi server (EnsureCartNotEmpty + stok) |
-| 2.4.1 | ⚠️ | Anti-automation hanya `throttle:login` (5/menit) + `RateLimitTest`; checkout/API tanpa rate limit |
+| 2.4.1 | ✅ | Throttle umum `throttle:api` 120/menit per user di seluruh group v1 + `ApiRateLimitTest`; endpoint spesifik lebih ketat (login 5, checkout 10, register 3, change-password 5) |
 
 ## V3 — Web Frontend Security
 
@@ -144,14 +149,14 @@ log/Pusher driver).
 |---|---|---|
 | 6.1.1 | ⚠️ | Kontrol anti-automation ada (throttle) tapi belum didokumentasikan formal |
 | 6.1.2, 6.2.11, 6.2.12 | ❌ | Tidak ada kebijakan password / cek password bocor (belum ada alur set password) |
-| 6.2.1 | ⚠️ | Panjang min password belum diatur (login saja; belum ada register/ubah password) |
-| 6.2.2, 6.2.3 | ❌ | Fitur ubah password belum ada |
+| 6.2.1 | ✅ | min:8 + confirmed konsisten di register, reset, dan ubah password (`ChangePasswordRequest`/`RegisterRequest`/`ResetPasswordRequest`) |
+| 6.2.2, 6.2.3 | ✅ | Ubah password saat login (`POST /change-password`: `current_password` + policy min:8 + beda dari lama) + `ChangePasswordTest`; policy konsisten antar fitur password |
 | 6.2.4 | ❌ | Cek password terhadap daftar breach belum ada |
 | 6.2.9 | ⚠️ | Password 64+ karakter: tidak ada batas max di input — praktis boleh, belum diuji |
 | 6.3.2 | ⚠️ | Akun seed `test@example.com` = akun terdokumentasi (dev lab) — jangan dibawa ke produksi |
 | 6.3.3 | ❌ | Tidak ada MFA (kandidat: Fortify 2FA) |
 | 6.4.1 | ⚠️ | Password seed dari factory (deterministik) — wajar untuk dev, produksi wajib random |
-| 6.4.3 | ❌ | Reset password belum ada |
+| 6.4.3 | ✅ | Reset password ada (T1: token hashed, 60 menit, single-use) + ubah password (2026-10-19) |
 | 6.5.x–6.8.x | N/A | Tanpa TOTP/lookup secret/PSTN/SAML |
 
 ## V7 — Session Management
@@ -277,8 +282,8 @@ JSON/HTML).
 |---|---|---|
 | 16.1.1 | ⚠️ | Inventaris logging belum jadi dokumen |
 | 16.2.5 | ⚠️ | Payload log `checkout.completed` berisi item/total (bukan PII/kredensial) — kebijakan redaksi belum formal |
-| 16.3.1 | ⚠️ | Login sukses/gagal belum di-log eksplisit sebagai event |
-| 16.3.2 | ⚠️ | Gagal otorisasi (403) belum di-log |
+| 16.3.1 | ✅ | Event auth terstruktur: `auth.login`, `auth.login_failed` (email+ip, TANPA password), `auth.logout`, `auth.password_changed` — `AuthLoggingTest` |
+| 16.3.2 | ✅ | Penolakan otorisasi: `auth.denied` (403, semua jalur) + `auth.unauthenticated` (401 via callback `AuthenticationException`) di render handler |
 | 16.3.3 | ⚠️ | Event keamanan terdefinisi belum lengkap (baru `checkout.completed`) |
 | 16.4.2 | ⚠️ | Log di `storage/logs` lokal (gitignore ✓) — akses & integritas terikat filesystem |
 | 16.4.3 | ❌ | Log belum dikirim ke sistem terpisah — **terencana di fase ELK** |

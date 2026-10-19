@@ -95,6 +95,10 @@ async function parseOrThrow(res: Response): Promise<unknown> {
       : 'Login gagal.'
     const error = new Error(message) as ApiError
     error.status = res.status
+    // Bentuk validasi Laravel {message, errors} — WAJIB diteruskan, kalau
+    // tidak view (register/reset/change-password) tak bisa menampilkan
+    // pesan field pertama. Konsisten dengan request() di atas.
+    error.errors = (json as { errors?: Record<string, string[]> } | null)?.errors ?? {}
     throw error
   }
   return json
@@ -135,6 +139,15 @@ export async function spaForgotPassword(email: string): Promise<{ message: strin
 
 export async function spaResetPassword(token: string, email: string, password: string): Promise<void> {
   await spaPost('/reset-password', { token, email, password, password_confirmation: password })
+}
+
+/** ASVS 6.2.2 — ubah password saat login (route web, session auth). */
+export async function spaChangePassword(currentPassword: string, password: string): Promise<{ message: string }> {
+  return spaPost('/change-password', {
+    current_password: currentPassword,
+    password,
+    password_confirmation: password,
+  }) as Promise<{ message: string }>
 }
 
 export async function spaResendVerification(): Promise<{ message: string }> {

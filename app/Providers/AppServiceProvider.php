@@ -82,5 +82,20 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('checkout', function (Request $request) {
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Ubah password: 5/menit per user (payload TANPA email — limiter
+        // 'password' by email tak bisa dipakai) — hambat brute-force
+        // current_password dari sesi yang dicuri.
+        RateLimiter::for('change-password', function (Request $request) {
+            return Limit::perMinute(5)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // API v1 (ASVS 2.4.1): lapisan THROTTLE UMUM per user. Endpoint
+        // spesifik (checkout 10, register 3, login 5) tetap berlaku dan
+        // lebih ketat. 120/menit: cukup utk ASVS, longgar utk e2e
+        // (≈40 request/run serial) & CI retry (×3 masih aman).
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

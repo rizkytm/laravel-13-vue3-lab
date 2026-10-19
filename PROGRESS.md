@@ -40,9 +40,10 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | T8 — Cancel order customer | ✅ | `feat(payment+admin)` | +6 PHP +2 Vitest: POST /orders/{id}/cancel + policy (pemilik+pending), tombol SPA, restock berjejak |
 | H — Hardening ASVS (headers + cache-control) | ✅ | `feat(security)` | +7 PHP +3 e2e: middleware global AddSecurityHeaders (HSTS, nosniff, Referrer-Policy, X-Frame-Options, CSP sebagian) + no-store + CORS ketat; CSP tanpa script-src (Filament tanpa nonce) |
 | E2E T1–T8 (Playwright) | ✅ | `test(e2e)` | 16 e2e: 3-project (setup/anon/storageState) hindari 429, serial workers:1 antar-spec cart; register, reset (baca log), cart reload, cancel, admin 403+refund; seeder +admin +order paid |
+| CI e2e + ASVS lanjutan | ✅ | `ci` + `feat(auth)` | Job e2e GitHub Actions; ubah password (route+view+nav+test), auth logging (login/logout/401/403), throttle API v1 120/mnt; Pint difix (7 file) |
 
-Test terakhir: **182 passed (PHP) + 68 passed (Vitest) + 16 passed (Playwright e2e) + `vue-tsc --noEmit` & eslint bersih**.
-**Seluruh implementasi selesai (M1-M8 + F1-F4 + scope T1-T8 + hardening H + e2e)** — commit `feat(F4)` + `089f0e5` + `feat(security)` + `test(e2e)`.
+Test terakhir: **195 passed (PHP) + 71 passed (Vitest) + 16 passed (Playwright e2e) + `vue-tsc --noEmit` & eslint & Pint bersih**.
+**Seluruh implementasi selesai (M1-M8 + F1-F4 + scope T1-T8 + hardening H + e2e + CI & ASVS lanjutan)** — lihat `git log`.
 Cara jalankan semua suite: `make test` (PHP+Vitest); e2e: lihat prasyarat di `FEATURES.md` section I.
 Scope e-commerce production grade (SCOPE.md) lulus penuh; deviasi tercatat di SCOPE.md.
 Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).

@@ -3,10 +3,12 @@
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -48,7 +50,34 @@ return Application::configure(basePath: dirname(__DIR__))
         // 404 bawaan membocorkan nama model internal
         // ("No query results for model [App\Models\Product] 999") → ganti
         // pesan konsisten tanpa info internal.
+
+        // ASVS 16.3.2 — 401: exception-nya AuthenticationException (BUKAN
+        // HttpException — callback di bawah tidak akan dipanggil untuk kasus
+        // ini, jadi callback terpisah dengan type-hint yang cocok).
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
+            Log::warning('auth.unauthenticated', [
+                'status' => 401,
+                'path' => '/'.$request->path(),
+                'user_id' => $request->user()?->getKey(),
+                'ip' => $request->ip(),
+            ]);
+
+            return null; // biarkan handler default (redirect web / 401 JSON)
+        });
+
         $exceptions->render(function (HttpException $e, Request $request) {
+            // ASVS 16.3.2 — audit penolakan otorisasi (403), SEMUA jalur
+            // (api & web/panel). Structured, payload aman: path + siapa yang
+            // mencoba — tanpa kredensial/token apa pun.
+            if ($e->getStatusCode() === 403) {
+                Log::warning('auth.denied', [
+                    'status' => 403,
+                    'path' => '/'.$request->path(),
+                    'user_id' => $request->user()?->getKey(),
+                    'ip' => $request->ip(),
+                ]);
+            }
+
             if (! $request->is('api/*')) {
                 return null; // biarkan handler default (web/HTML) yang proses
             }
