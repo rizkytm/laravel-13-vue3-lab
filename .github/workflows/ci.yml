@@ -30,6 +30,7 @@ jobs:
               - 'composer.lock'
               - 'phpunit.xml'
               - '.env.example'
+              - '.github/workflows/ci.yml'
             frontend:
               - 'frontend/**'
 
@@ -100,3 +101,76 @@ jobs:
 
       - name: Security audit
         run: npm audit --audit-level=critical
+
+  # E2E lintas origin (Laravel + Vite) — melengkapi unit/feature: alur
+  # register, reset, cart, cancel, admin, security headers. Menjalankan
+  # keduanya karena e2e menguji integrasi backend DAN frontend.
+  e2e:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cache composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install backend dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Prepare env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # Prasyarat e2e (kontrak data: test@ + admin@ + 12 produk + 6 order).
+      # Rate limiter bersih = runner fresh, tak perlu cache:clear.
+      - name: Seed database
+        run: |
+          touch database/database.sqlite
+          php artisan migrate:fresh --seed
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # webServer di playwright.config menyalakan artisan serve + vite
+      # sendiri (CI=true → reuseExistingServer:false).
+      - name: Run e2e tests
+        working-directory: frontend
+        run: npm run test:e2e
+
+      # Trace `retain-on-failure` — unggah utk debug cepat saat gagal
+      - name: Upload traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: frontend/test-results
+          retention-days: 7
