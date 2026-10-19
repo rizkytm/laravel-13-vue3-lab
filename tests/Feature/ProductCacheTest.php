@@ -35,6 +35,29 @@ it('invalidates cache when product saved through model', function () {
     $this->getJson('/api/v1/products')->assertJsonFragment(['name' => 'Kopi Baru']);
 });
 
+// Regresi: InventoryService update stok via QUERY BUILDER (melewati event
+// Eloquent). Tanpa bump versi eksplisit, list menyajikan stok lama sampai
+// TTL 5 menit habis — padahal detail (tanpa cache) sudah benar.
+it('refreshes cached stock after InventoryService changes it', function () {
+    $product = Product::factory()->create(['stock' => 5]);
+    Sanctum::actingAs(User::factory()->create());
+
+    // Prime cache list — nilai 5 ter-cache
+    $this->getJson('/api/v1/products')
+        ->assertOk()
+        ->assertJsonFragment(['stock' => 5]);
+
+    // Beli 2 lewat jalur resmi (query builder + movement)
+    expect($product->buy(2))->toBeTrue();
+
+    // Cache MISS → list wajib menampilkan stok terbaru (3), bukan 5
+    $this->getJson('/api/v1/products')
+        ->assertJsonFragment(['stock' => 3]);
+
+    // Jejak movement tetap sinkron dengan stok (invariant)
+    expect((int) $product->movements()->sum('quantity'))->toBe(3);
+});
+
 it('cache hit dengan driver database tidak merusak objek (serializable_classes)', function () {
     // Driver array TIDAK serialize — bug korupsi objek cuma muncul di store
     // yang serialize (database/file). Paksa database di test ini.

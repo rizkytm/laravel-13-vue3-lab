@@ -61,9 +61,21 @@ class Product extends Model
         // Cache invalidation via VERSION STAMP: key cache menyertakan versi,
         // save/delete menaikkan versi → semua key lama otomatis kelewat
         // (expired alami) tanpa perlu tahu key persisnya (query param bebas).
-        $bumpCacheVersion = fn () => Cache::forever('products.version', (int) Cache::get('products.version', 1) + 1);
-        static::saved($bumpCacheVersion);
-        static::deleted($bumpCacheVersion);
+        static::saved(fn () => self::bumpCacheVersion());
+        static::deleted(fn () => self::bumpCacheVersion());
+    }
+
+    /**
+     * Naikkan versi cache list produk — semua key 'products.index.v{…}'
+     * lama otomatis kelewat (miss) tanpa tahu key persisnya.
+     *
+     * Dipanggil dari model event (saved/deleted) DAN dari InventoryService,
+     * karena InventoryService mengubah stok lewat QUERY BUILDER yang
+     * melewati event Eloquent — tanpa panggilan eksplisit, list jadi basi.
+     */
+    public static function bumpCacheVersion(): void
+    {
+        Cache::forever('products.version', (int) Cache::get('products.version', 1) + 1);
     }
 
     /**

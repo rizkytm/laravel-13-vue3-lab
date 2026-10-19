@@ -41,6 +41,10 @@ class InventoryService
             Product::query()->whereKey($product->getKey())->update(['stock' => $newStock]);
             $product->refresh();
 
+            // Query builder melewati event Product::saved → bump manual,
+            // kalau tidak: cache list (5 menit) menyajikan stok lama.
+            Product::bumpCacheVersion();
+
             $this->write($product, MovementType::Out, -$quantity, $newStock, $reason, $order);
 
             return true;
@@ -63,6 +67,9 @@ class InventoryService
             Product::query()->whereKey($product->getKey())->update(['stock' => $newStock]);
             $product->refresh();
 
+            // Bypass event Eloquent (query builder) → bump versi cache manual
+            Product::bumpCacheVersion();
+
             return $this->write($product, MovementType::In, $quantity, $newStock, $reason, $order);
         });
     }
@@ -81,6 +88,9 @@ class InventoryService
 
             Product::query()->whereKey($product->getKey())->update(['stock' => $newStock]);
             $product->refresh();
+
+            // Bypass event Eloquent (query builder) → bump versi cache manual
+            Product::bumpCacheVersion();
 
             return $this->write($product, MovementType::Adjust, $newStock - $stock, $newStock, $reason, null);
         });
