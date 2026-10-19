@@ -256,6 +256,186 @@ curl -s -H 'Accept: application/json' http://127.0.0.1:8000/api/v1/orders   # 40
 - **Harapkan:** semua response JSON sesuai resource (field `data`/`meta`);
   401/404/422 berformat konsisten; order hanya milik token tsb.
 
+> Catatan alur cart/checkout di E5: sejak tahap 3 payload checkout TIDAK
+  membawa `items` — keranjang dibaca dari tabel `cart_items`. Isi cart dulu
+  (A4 / `POST /api/v1/cart/items`), baru `POST /api/v1/checkout` tanpa body.
+
+---
+
+## G. Scope e-commerce (tahap T1–T8 — SCOPE.md)
+
+Prasyarat tambahan (sekali jalan) untuk T5/T6:
+
+```bash
+php artisan tinker --execute='App\Models\User::factory()->admin()->create(["email"=>"admin@example.com","password"=>"password"])'
+```
+
+Mail = `log driver` — semua link verifikasi & reset muncul di log, bukan inbox:
+`tail -f storage/logs/laravel.log` (grep `http://`).
+
+### G1. Register + password reset + email verification (T1)
+
+- **Kode:** `RegisterController`/`ForgotPasswordController`/`ResetPasswordController`/
+  `VerifyEmailController`, route `POST /register` & `/forgot-password` (& throttle
+  `register` 3/mnt, `password` 3/mnt), views `frontend/src/views/{Register,ForgotPassword,ResetPassword,VerifyEmail}View.vue`
+- **Langkah:** buka `http://localhost:5173/register` → isi → submit. Lalu
+  `→ /forgot-password` → isi email → ambil link dari log → `/reset-password?token=…`
+  → set password baru. Untuk verifikasi: daftar, ambil link `/email/verify/…` dari log → buka.
+- **Harapkan:**
+  - Register → **auto-login** (langsung ke home, banner cek email).
+  - Forgot-password → pesan generik `202` (anti user-enumeration — jangan bocorkan
+    email tidak terdaftar).
+  - Buka link reset → auto-login dengan password baru; **link kedua → token sudah
+    dipakai** (single-use).
+  - Verifikasi: buka link → `sudah terverifikasi`; buka **lagi → tetap 200** (idempoten).
+  - Register 4× cepat → `429`.
+
+### G2. Status machine + inventory movement (T2)
+
+- **Kode:** `Enums/OrderStatus.php` (`canTransitionTo`), `Models/Order.php`
+  (`transitionTo`), `Services/InventoryService.php`, `Models/Product.php` (`buy`)
+- **Langkah:** buka `/products/{slug}` → lihat stok (mis. 5) → **Tambah ke keranjang
+  → stok BELUM turun** (cart tidak mereservasi) → isi qty 2 → Checkout → buka lagi
+  detail produk → stok turun jadi 3. Verifikasi invariant di tinker:
+  `php artisan tinker --execute='foreach(App\Models\Product::all() as $p) echo $p->id.": stock={$p->stock} sum=".intval($p->movements()->sum("quantity")).PHP_EOL;'`
+- **Harapkan:**
+  - Stok hanya berkurang **saat checkout** (bukan saat add-to-cart).
+  - Setiap perubahan stok meninggalkan baris `inventory_movements`; **SUM(quantity)
+    == stock** untuk tiap produk (khususnya stok awal = gerakan `in` pertama).
+  - Bila list produk menampilkan stok lama setelah checkout → **bug cache** (sudah
+    diperbaiki `e5b1496` — versi cache harus ikut naik).
+
+### G3. Keranjang server-side + rate limit checkout (T3)
+
+- **Kode:** `Api/CartController.php`, `Api/CheckoutController.php`,
+  `Middleware/EnsureCartNotEmpty.php`, migrasi `cart_items`, `stores/cart.ts`
+- **Langkah:**
+  1. Tambah item → klik **Tambah** 2× → di Keranjang qty = 2 (additive, bukan timpa).
+  2. **Reload tab** → keranjang tetap (dari DB `cart_items`, bukan localStorage).
+  3. Ubah qty → hapus item → kosongkan.
+  4. Qty melebihi stok → server clamp ke stok.
+  5. Checkout 11× berturut-turut dalam <1 menit.
+- **Harapkan:**
+  - Keranjang identik setelah reload & **hanya milik user login** (logout → cart
+    kosong; login user lain → cart berbeda).
+  - Clamp stok terjadi di **server** (bukan UI yang sembunyikan).
+  - Checkout ke-11 → `429` (limiter `checkout` 10/menit per user).
+  - Cart kosong → checkout → `422` (`EnsureCartNotEmpty`).
+
+### G4. Payment gateway Midtrans (T4)
+
+> **Kenapa tidak kelihatan di browser:** default `PAYMENT_DRIVER=fake` — checkout
+> langsung `paid` oleh `FakePaymentGateway`, Midtrans tidak pernah dipanggil.
+> T4 diuji lewat **webhook** (server-to-server) + test `Http::fake`.
+
+- **Kode:** `Services/Payment/MidtransPaymentGateway.php` (Snap + `verifySignature`),
+  `Http/Controllers/PaymentWebhookController.php`, route `POST /api/payments/midtrans/webhook`
+  (publik, tanpa CSRF), `Services/Payment/AsyncPaymentGateway.php` + `Jobs/ProcessPayment.php`
+- **Langkah — generate payload bertanda tangan** (ambil order `pending` terakhir):
+  ```bash
+  php artisan tinker --execute='
+  $o = App\Models\Order::where("status", App\Enums\OrderStatus::Pending)->orderByDesc("id")->first();
+  if (! $o) { echo "TIDAK ADA ORDER PENDING — checkout dulu lewat SPA."; exit(1); }
+  $sid = "200"; $ga = (string) $o->total;
+  $sig = hash("sha512", $o->id.$sid.$ga.config("payment.midtrans.server_key"));
+  echo json_encode([
+    "order_id" => (string) $o->id, "status_code" => $sid, "gross_amount" => $ga,
+    "transaction_status" => "settlement", "transaction_id" => "mid-".uniqid(),
+    "signature_key" => $sig,
+  ]);'
+  ```
+- **Langkah — kirim ke webhook** (tempel output di atas):
+  ```bash
+  curl -i -X POST http://127.0.0.1:8000/api/payments/midtrans/webhook \
+    -H 'Content-Type: application/json' -d 'PASTE_JSON'
+  php artisan tinker --execute='echo App\Models\Order::latest("id")->first()->status->value;'
+  ```
+- **Harapkan:**
+  - `settlement` → **HTTP 200**, order `pending` → **`paid`** + `transaction_id` terisi.
+  - Signature korup (ubah `gross_amount` tanpa hitung ulang sig) → **403** — dan
+    status TIDAK berubah.
+  - Payload sama dikirim 2× → **200** kedua kali, status tetap `paid` (idempoten).
+  - `transaction_status` `cancel` → `cancelled`; `deny` → `failed`.
+  - `order_id` tidak ada → **404**.
+  - Regresi penting: dengan `PAYMENT_DRIVER=midtrans`, checkout → `ProcessPayment`
+    **TIDAK** menandai `paid` (job log `payment.awaiting_webhook`, biarkan `pending`)
+    — **webhook satu-satunya jalan ke `paid`**. Dengan `fake` tetap `paid` di job.
+- **Uji otomatis:** `php artisan test --filter=MidtransWebhookTest` (11 test).
+
+### G5. Refund (T5)
+
+- **Kode:** `Services/RefundService.php`, `Models/Order.php` (`refund()`),
+  `Services/Payment/RefundablePaymentGateway.php`, transisi `paid → refunded`
+- **Langkah:** login `/admin` (G6) → `/admin/orders` → order **paid** → aksi **Refund**
+  → konfirmasi. Cek stok produk & log refund.
+- **Harapkan:**
+  - Status `paid` → **`refunded`**; stok order me-**restock** + jejak movement `in`.
+  - Urutan benar: **uang kembali dulu, status sesudahnya** — kalau gateway menolak,
+    status tetap `paid` dan stok tidak berubah (uji lewat test, driver fake menolak
+    via tiruan gateway).
+  - Refund doang → kedua kali **ditolak** (`refunded` terminal), uang hanya sekali.
+  - Order non-paid → refund ditolak (status machine).
+- **Uji otomatis:** `php artisan test --filter=RefundTest` (8 test).
+
+### G6. Filament admin (T6)
+
+- **Kode:** `Providers/Filament/AdminPanelProvider.php` (`/admin`),
+  `Models/User.php` (`canAccessPanel`, kolom `is_admin`), `app/Filament/Resources/{Orders,Products,Users}`
+- **Langkah:**
+  1. Login `/admin` dengan `admin@example.com` (lihat prasyarat) — lihat ada
+     Dashboard + Pesanan/Produk/Pengguna.
+  2. Coba login dengan `test@example.com` (bukan admin) di `/admin`.
+  3. `/admin/products` → buka produk → kolom **Stok** tampil sebagai teks (bukan input).
+  4. `/admin/users` → buka user → toggle **Admin** bisa diubah.
+  5. Logout lalu buka `/admin` tanpa login.
+- **Harapkan:**
+  - Non-admin → **403** (ditolak masuk); tamu → redirect ke `/admin/login`.
+  - Stok di form produk **read-only** (perubahan hanya lewat `InventoryService`).
+  - Status order di form **read-only** — ubah hanya lewat aksi tabel
+    **Batalkan**/**Refund** (lewat status machine), bukan dropdown bebas.
+- **Uji otomatis:** `php artisan test --filter=FilamentAdminTest` (5 test).
+
+### G7. Stok realtime (T7)
+
+- **Kode:** `frontend/src/realtime.ts` (subscribe `products`/`StockUpdated`),
+  `stores/cart.ts` (`applyStockUpdate`), wiring `App.vue`; event `Events/StockUpdated.php`
+- **Langkah (tanpa Reverb — default lab):**
+  1. `cd frontend && npx vitest run tests/realtime.spec.js` (6 test).
+  2. Dari browser: stok update **belum** terlihat real-time — karena
+     `BROADCAST_DRIVER=log` + tanpa Redis/Reverb **tidak ada websocket sungguhan**.
+     Sebagai gantinya stok segar muncul lewat **refresh** (T2, sudah lulus).
+  3. (Opsional, produksi) pasang Reverb/Pusher lalu expose broadcaster:
+     `window.__BROADCAST__ = echoInstance` sebelum app mount — `realtime.ts`
+     otomatis aktif, tanpa ubah file.
+- **Harapkan:**
+  - Tanpa broadcaster → `subscribeStockUpdates` **no-op aman** (tak error, unsubscribe
+    tetap boleh dipanggil) — diuji di spec.
+  - Payload malformed (`null`, `product_id` bukan angka) → **diabaikan**.
+  - Dengan broadcaster tiruan: event `StockUpdated` → `cart.applyStockUpdate` →
+    **quantity di-clamp** ke stok baru (qty 5 & stok 2 → qty 2; stok naik → qty tidak
+    ikut naik); produk lain di cart tidak tersentuh.
+- **Catatan:** bagian browser step 2 = **expected**, bukan bug (lihat SCOPE.md
+  "Status implementasi" → deviasi stok realtime).
+
+### G8. Cancel order customer (T8)
+
+- **Kode:** `Api/OrderController::cancel`, `Policies/OrderPolicy::cancel`
+  (pemilik + pending), route `POST /api/v1/orders/{order}/cancel`,
+  `views/OrderDetailView.vue` (tombol), `stores`
+- **Langkah:**
+  1. Checkout (biarkan `pending` — jangan tunggu worker) → buka Pesanan →
+     buka order itu → tombol **Batalkan order**.
+  2. Klik tombol → amati status + stok produk.
+  3. Buka order yang sudah `paid` → periksa tombol.
+  4. (otorisasi) dengan user lain / tanpa login → `POST .../cancel` via curl.
+- **Harapkan:**
+  - Tombol **hanya tampil untuk `pending`**; `paid` → tombol tidak ada.
+  - Klik → status `cancelled`, **stok me-restock** + jejak movement `in`, tombol hilang.
+  - Order `paid` → **403** (refund = urusan admin, G5); order user lain → **403**;
+    tanpa login → **401**.
+  - Cancel doang → kedua kali **403** (bukan pending lagi), stok tidak dobel-restock.
+- **Uji otomatis:** `php artisan test --filter=CancelOrderTest` (6 test).
+
 ---
 
 ## F. Checklist bug-hunt (dari PROGRESS)
@@ -274,6 +454,20 @@ curl -s -H 'Accept: application/json' http://127.0.0.1:8000/api/v1/orders   # 40
 - [x] `npm run dev` tanpa warning
 - [x] Catat temuan → `ISSUES.md` (6 isu + fix) → bug pertama jadi kandidat
       test Playwright
+
+### Checklist scope T1–T8 (SCOPE.md)
+
+- [x] G1 (T1) register/reset/verifikasi — lulus manual + 23 test
+- [x] G2 (T2) status machine + inventory movement — lulus (bug ketemu: cache list
+      stok basi setelah checkout → fix `e5b1496`, regresi ditambahkan)
+- [x] G3 (T3) keranjang server-side + rate limit checkout — lulus
+- [x] G4 (T4) Midtrans webhook signature — lulus (bug ketemu: `ProcessPayment`
+      paid prematur untuk gateway async → fix `63582ce`, regresi ditambahkan)
+- [x] G5 (T5) refund — lulus via admin + 8 test
+- [x] G6 (T6) Filament admin `/admin` (hanya `is_admin`) — lulus + 5 test
+- [x] G7 (T7) stok realtime — lulus (deviasi terdokumentasi: no-op tanpa Reverb,
+      spec 6 test)
+- [x] G8 (T8) cancel order customer — lulus manual + 6 test
 
 > Temuan manual E2E selanjutnya: tulis di `ISSUES.md` (format sama),
 > jangan dibetulkan diam-diam.
