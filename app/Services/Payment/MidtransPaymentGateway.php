@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Http;
  * charge() di sini membuat sesi Snap dan mengembalikan token sebagai
  * referensi; konfirmasi pembayaran SEBENARNYA datang dari webhook.
  */
-class MidtransPaymentGateway implements RefundablePaymentGateway
+class MidtransPaymentGateway implements AsyncPaymentGateway, RefundablePaymentGateway
 {
     /**
      * Penuhi kontrak PaymentGateway: buat sesi Snap, kembalikan token.

@@ -87,6 +87,39 @@ it('marks order paid on valid settlement webhook', function () {
         ->and($order->paid_at)->not->toBeNull();
 });
 
+// Regresi: ProcessPayment lama menandai paid SETELAH charge(). Untuk gateway
+// async (Midtrans), charge() hanya membuat SESI — paid prematur = order
+// terlihat lunas sebelum user benar-benar bayar. Job harus diam, webhook
+// yang mengesahkan.
+it('processpayment leaves async-gateway order pending — webhook is the authority', function () {
+    config(['payment.driver' => 'midtrans']);
+
+    Http::fake(['app.sandbox.midtrans.com/*' => Http::response(['token' => 't', 'redirect_url' => 'r'], 200)]);
+
+    $order = Order::factory()->create(['status' => OrderStatus::Pending, 'total' => 40000]);
+
+    (new \App\Jobs\ProcessPayment($order))->handle(app(\App\Services\Payment\PaymentGateway::class));
+
+    $order->refresh();
+    expect($order->status)->toBe(OrderStatus::Pending)      // JANGAN paid
+        ->and($order->paid_at)->toBeNull()
+        ->and($order->transaction_id)->toBeNull();
+
+    // Webhook signature valid → baru paid
+    $this->postJson('/api/payments/midtrans/webhook', midtransWebhook($order))->assertOk();
+    expect($order->refresh()->status)->toBe(OrderStatus::Paid);
+});
+
+it('still marks paid synchronously for the fake (sync) gateway', function () {
+    // Regresi arah sebaliknya: jalur lama (fake driver) tidak boleh rusak
+    $order = Order::factory()->create(['status' => OrderStatus::Pending, 'total' => 40000]);
+
+    (new \App\Jobs\ProcessPayment($order))->handle(app(\App\Services\Payment\PaymentGateway::class));
+
+    expect($order->refresh()->status)->toBe(OrderStatus::Paid)
+        ->and($order->paid_at)->not->toBeNull();
+});
+
 it('rejects webhook with tampered signature (403)', function () {
     $order = Order::factory()->create(['status' => OrderStatus::Pending, 'total' => 40000]);
 

@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Services\Payment\AsyncPaymentGateway;
 use App\Services\Payment\PaymentGateway;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,6 +37,16 @@ class ProcessPayment implements ShouldQueue
         // → tiap retry model di-refetch ulang, paid_at dari attempt
         // sebelumnya terbaca.
         if ($this->order->paid_at !== null) {
+            return;
+        }
+
+        // GATEWAY ASYNC (redirect/sesi — mis. Midtrans Snap): charge() tidak
+        // berarti "user sudah bayar", dia hanya membuat sesi. Menandai paid
+        // di sini = PREMATUR. Order sengaja dibiarkan 'pending' sampai
+        // WEBHOOK provider tiba dengan signature valid → Paid.
+        if ($gateway instanceof AsyncPaymentGateway) {
+            Log::info('payment.awaiting_webhook', ['order_id' => $this->order->getKey()]);
+
             return;
         }
 
