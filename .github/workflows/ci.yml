@@ -48,7 +48,7 @@ jobs:
           coverage: none
 
       - name: Cache composer
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor
           key: composer-${{ hashFiles('composer.lock') }}
@@ -125,7 +125,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Cache composer
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: vendor
           key: composer-${{ hashFiles('composer.lock') }}
@@ -151,7 +151,7 @@ jobs:
           php artisan migrate:fresh --seed
 
       - name: Cache Playwright browser
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ hashFiles('frontend/package-lock.json') }}
