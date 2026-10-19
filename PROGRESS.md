@@ -200,7 +200,7 @@ Jawab setelah seluruh implementasi selesai (M8 + fase F):
 
 ```bash
 # Server & test
-php artisan serve                    # cek browser: http://127.0.0.1:8000
+php artisan serve                    # cek browser: http://localhost:8000
 php artisan test                     # full suite — harus hijau sebelum lanjut
 
 # Database

@@ -11,7 +11,7 @@ Playwright/regression pertama).
 ```bash
 # Terminal 1 — API + web
 php artisan migrate:fresh --seed     # reset + isi data demo
-php artisan serve                    # http://127.0.0.1:8000
+php artisan serve                    # http://localhost:8000
 
 # Terminal 2 — queue worker (fitur 4 & 5)
 php artisan queue:work
@@ -22,6 +22,15 @@ cd frontend && npm run dev           # http://localhost:5173
 
 Akun demo: `test@example.com` / `password`.
 Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
+
+> **⚠️ Pakai SATU hostname di semua URL browser: `localhost`.**
+> Cookie session itu **host-only** — `localhost` dan `127.0.0.1` dianggap
+> dua dunia berbeda oleh browser (lihat `ISSUES.md` #3). Contoh: login di
+> `http://localhost:5173` (SPA) **tidak** terbawa ke `http://127.0.0.1:8000/admin`
+> → yang terkirim justru session lama non-admin → **403**. Buka
+> `http://localhost:8000/admin` supaya host-nya sama dengan SPA. `SESSION_DOMAIN`
+> tak bisa menyembuhkan ini — `localhost`/`127.0.0.1` tak punya parent domain
+> bersama.
 
 ---
 
@@ -126,21 +135,21 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
   SLUG=$(php artisan tinker --execute='echo App\Models\Product::first()->slug;')
 
   # 1. ambil session + token dari halaman (form upload ada di products/show)
-  curl -s -c /tmp/j.txt -o /tmp/p.html "http://127.0.0.1:8000/products/$SLUG"
+  curl -s -c /tmp/j.txt -o /tmp/p.html "http://localhost:8000/products/$SLUG"
   TOKEN=$(grep -o 'name="_token" value="[^"]*"' /tmp/p.html | head -1 | sed 's/.*value="//;s/"//')
 
   # 2. upload (sertakan _token + cookie jar)
   curl -b /tmp/j.txt -F "_token=$TOKEN" -F "image=@/tmp/tiny.jpg" \
-    -H 'Accept: application/json' "http://127.0.0.1:8000/products/$SLUG/image"
+    -H 'Accept: application/json' "http://localhost:8000/products/$SLUG/image"
 
   # 3. download + bukti byte identik
-  curl -o /tmp/out.jpg "http://127.0.0.1:8000/products/$SLUG/image"
+  curl -o /tmp/out.jpg "http://localhost:8000/products/$SLUG/image"
   cmp /tmp/tiny.jpg /tmp/out.jpg && echo IDENTIK
 
   # 4. negatif: file bukan gambar → ditolak (422)
   echo "bukan gambar" > /tmp/fake.jpg
   curl -b /tmp/j.txt -F "_token=$TOKEN" -F "image=@/tmp/fake.jpg" \
-    -H 'Accept: application/json' "http://127.0.0.1:8000/products/$SLUG/image"
+    -H 'Accept: application/json' "http://localhost:8000/products/$SLUG/image"
   ```
 - **Harapkan:** upload OK + file masuk `storage/app/private/products/` (path
   random, nama file user diabaikan); download byte identik; file non-gambar
@@ -196,9 +205,9 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 - **Kode:** `bootstrap/app.php` `withExceptions` render callbacks
 - **Langkah (curl, terutama dari origin beda / header Accept: application/json):**
   ```bash
-  curl -H 'Accept: application/json' http://127.0.0.1:8000/products/tidak-ada   # 404
-  curl -H 'Accept: application/json' -X POST http://127.0.0.1:8000/api/v1/checkout  # 401
-  curl -H 'Accept: application/json' http://127.0.0.1:8000/orders/9999            # 403/404
+  curl -H 'Accept: application/json' http://localhost:8000/products/tidak-ada   # 404
+  curl -H 'Accept: application/json' -X POST http://localhost:8000/api/v1/checkout  # 401
+  curl -H 'Accept: application/json' http://localhost:8000/orders/9999            # 403/404
   ```
 - **Harapkan:** JSON `{message, …}` + status tepat (404/401/403), **bukan**
   HTML error page. Pesan 403 custom milik aplikasi.
@@ -228,27 +237,27 @@ Buka log terpisah biar kelihatan efeknya: `tail -f storage/logs/laravel.log`.
 
 ```bash
 # 1. Token
-TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/token \
+TOKEN=$(curl -s -X POST http://localhost:8000/api/token \
   -H 'Accept: application/json' -H 'Content-Type: application/json' \
   -d '{"email":"test@example.com","password":"password"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
 
 # 2. Siapa saya
-curl -s -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8000/api/user
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/user
 
 # 3. Produk (public via sanctum) + pagination
-curl -s -H "Authorization: Bearer $TOKEN" 'http://127.0.0.1:8000/api/v1/products?per_page=2'
+curl -s -H "Authorization: Bearer $TOKEN" 'http://localhost:8000/api/v1/products?per_page=2'
 
 # 4. Orders milik sendiri
-curl -s -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8000/api/v1/orders
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8000/api/v1/orders
 
 # 5. Checkout API
-curl -s -X POST http://127.0.0.1:8000/api/v1/checkout \
+curl -s -X POST http://localhost:8000/api/v1/checkout \
   -H "Authorization: Bearer $TOKEN" -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{"items":[{"product_id":1,"quantity":1}]}'
 
 # 6. Tanpa token → 401; cart kosong → 422 (EnsureCartNotEmpty); 404 → JSON
-curl -s -H 'Accept: application/json' http://127.0.0.1:8000/api/v1/orders   # 401
+curl -s -H 'Accept: application/json' http://localhost:8000/api/v1/orders   # 401
 ```
 
 - **Kode:** `routes/api.php`, `Http/Resources/*` (bentuk response),
@@ -346,7 +355,7 @@ Mail = `log driver` — semua link verifikasi & reset muncul di log, bukan inbox
   ```
 - **Langkah — kirim ke webhook** (tempel output di atas):
   ```bash
-  curl -i -X POST http://127.0.0.1:8000/api/payments/midtrans/webhook \
+  curl -i -X POST http://localhost:8000/api/payments/midtrans/webhook \
     -H 'Content-Type: application/json' -d 'PASTE_JSON'
   php artisan tinker --execute='echo App\Models\Order::latest("id")->first()->status->value;'
   ```
@@ -382,14 +391,18 @@ Mail = `log driver` — semua link verifikasi & reset muncul di log, bukan inbox
 - **Kode:** `Providers/Filament/AdminPanelProvider.php` (`/admin`),
   `Models/User.php` (`canAccessPanel`, kolom `is_admin`), `app/Filament/Resources/{Orders,Products,Users}`
 - **Langkah:**
-  1. Login `/admin` dengan `admin@example.com` (lihat prasyarat) — lihat ada
-     Dashboard + Pesanan/Produk/Pengguna.
+  1. Buka **`http://localhost:8000/admin`** (hostname **wajib `localhost`** —
+     sama dengan SPA; lihat peringatan di Prasyarat) → login `admin@example.com`
+     (lihat prasyarat) → lihat ada Dashboard + Pesanan/Produk/Pengguna.
   2. Coba login dengan `test@example.com` (bukan admin) di `/admin`.
   3. `/admin/products` → buka produk → kolom **Stok** tampil sebagai teks (bukan input).
   4. `/admin/users` → buka user → toggle **Admin** bisa diubah.
   5. Logout lalu buka `/admin` tanpa login.
 - **Harapkan:**
   - Non-admin → **403** (ditolak masuk); tamu → redirect ke `/admin/login`.
+  - **Dapat 403 padahal sudah login admin di SPA?** → buka pakai `127.0.0.1:8000`
+    (beda host) — cookie tidak menyilang. Bukan bug; solusi = samakan `localhost`
+    (lihat `ISSUES.md` #8).
   - Stok di form produk **read-only** (perubahan hanya lewat `InventoryService`).
   - Status order di form **read-only** — ubah hanya lewat aksi tabel
     **Batalkan**/**Refund** (lewat status machine), bukan dropdown bebas.

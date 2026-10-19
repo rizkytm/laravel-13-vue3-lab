@@ -36,7 +36,7 @@ cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed
 php artisan test          # 93 tests, all green
-php artisan serve         # http://127.0.0.1:8000
+php artisan serve         # http://localhost:8000
 ```
 
 Useful extras:
@@ -51,7 +51,7 @@ Demo login (web): `test@example.com` / `password`.
 API quick try:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/token \
+curl -X POST http://localhost:8000/api/token \
   -H "Accept: application/json" -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
 # → {"token":"1|..."} → use as Authorization: Bearer on /api/v1/*

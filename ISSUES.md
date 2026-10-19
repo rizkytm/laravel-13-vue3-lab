@@ -164,3 +164,49 @@ Bukti: curl dengan `Referer: http://localhost:5173/` → 401; dengan
   bisa meninggalkan konfigurasi setengah jalan. Verifikasi ulang setelah
   restore (di sesi ini: 4 e2e sempat gagal karena bukan fix-nya, melainkan
   rate limiter `throttle:login` 5/menit yang kebablasan oleh test berulang).
+
+---
+
+## 8. `/admin` 403 padahal sudah login admin di SPA (2026-10-19)
+
+**Laporan:** login `admin@example.com` di SPA (`http://localhost:5173`) →
+sukses. Buka `http://127.0.0.1:8000/admin` → **403 Forbidden**. Tapi kalau
+login dulu di `http://127.0.0.1:8000/login` → `/admin` bisa.
+
+**Akar masalah:** cookie session **host-only** (`Set-Cookie` Laravel: `path=/;
+httponly; samesite=lax`, tanpa atribut `Domain`). `localhost` dan `127.0.0.1`
+dianggap **host berbeda** oleh browser → dua cookie jar terpisah, dua session
+terpisah:
+
+- SPA `localhost:5173` (proxy ke backend) menyetel cookie untuk host **`localhost`**.
+- Membuka `127.0.0.1:8000` hanya mengirim cookie host **`127.0.0.1`** — session
+  admin di `localhost` **tidak ikut**.
+- Host `127.0.0.1` masih menyimpan session lama dari login langsung pakai
+  `test@example.com` → terautentikasi tapi **bukan admin** → `canAccessPanel()`
+  false → **403** (bukan redirect, karena bukan tamu).
+
+Bukti (eksperimen terkontrol, curl cookie jar terpisah):
+
+```
+login ADMIN via localhost:8000  → cookie host=localhost  → GET /admin → 200
+login NON-ADMIN via 127.0.0.1   → cookie host=127.0.0.1  → GET /admin → 403
+```
+
+**Fix:** tidak ada di kode (perilaku cookie memang benar & diinginkan) —
+**docs** yang diperbaiki: semua URL diseragamkan ke **`localhost`**
+(`APP_URL` sudah `http://localhost:8000`), plus peringatan di `FEATURES.md`
+Prasyarat dan langkah G6 yang menyebut hostname eksplisit.
+`SESSION_DOMAIN` **tidak** bisa menyembuhkan ini — `localhost`/`127.0.0.1`
+tidak punya parent domain bersama.
+
+**Pelajaran:**
+- Pelajaran issue #3 ("campur `localhost`/`127.0.0.1` = cookie beda dunia")
+  **sudah tertulis tapi dilanggar docs sendiri** — prasyarat lama menulis
+  backend `127.0.0.1:8000` sementara SPA `localhost:5173`. Kalau ada aturan
+  konsistensi, dokumen instruksinya ikut divalidasi, bukan hanya kode.
+- Bedakan tiga kondisi dari satu kode status: **redirect** = tamu;
+  **403** = terautentikasi non-admin; **200** = admin. Membaca status code
+  sudah cukup untuk menebak isi session tanpa membuka devtools.
+- Untuk menguji klaim semacam ini, buat eksperimen terkontrol (dua cookie
+  jar, dua host, login beda akun) alih-alih berspekulasi — sekali jalan
+  langsung ketahuan akar masalahnya.
