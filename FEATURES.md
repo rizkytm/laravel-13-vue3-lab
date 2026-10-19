@@ -485,6 +485,52 @@ Mail = `log driver` — semua link verifikasi & reset muncul di log, bukan inbox
 
 ---
 
+## I. E2E Playwright — peta cakupan T1–T8
+
+**Cara jalankan (prasyarat WAJIB — lihat catatan rate limit & state di bawah):**
+```bash
+php artisan migrate:fresh --seed   # data segar: test@ + admin@ + 12 produk + 6 order
+php artisan cache:clear            # reset rate limiter (login 5/mnt, register 3/mnt)
+cd frontend && npm run test:e2e    # 16 test, jalankan serial (workers:1)
+```
+
+**Arsitektur 3 project (`playwright.config.ts`) — cara hindari 429:**
+
+| Project | Spec | Kenapa terpisah |
+|---|---|---|
+| `setup` | `setup/auth.setup.ts` | login SEKALI → tulis `playwright-auth.json` |
+| `anon` | `auth`, `register`, `password-reset`, `security-headers` | butuh state bersih (uji login/guest asli) |
+| `app` | `orders`, `products`, `cart`, `cancel-order`, `admin` | pakai storageState — **tanpa login ulang** |
+
+**Peta cakupan:**
+
+| Tahap | Spec | Alur |
+|---|---|---|
+| T1 | `register.spec.ts` | register → auto-login → notice verifikasi |
+| T1 | `password-reset.spec.ts` | register → forgot → **tautan dari `laravel.log`** → reset → auto-login |
+| T3 | `cart.spec.ts` | add → **reload tetap (server-side)** → clamp qty → hapus |
+| T8 | `cancel-order.spec.ts` | checkout (pending — queue worker tak jalan) → cancel → status `cancelled` |
+| T5 | `admin.spec.ts` | panel → login admin → aksi **Refund** order paid → `refunded` |
+| T6 | `admin.spec.ts` | non-admin → **403**; admin → dashboard → resource orders |
+| H | `security-headers.spec.ts` | header via HTTP asli `localhost:8000` |
+| T2/T4/T7 | — | sengaja TIDAK di-e2e: tercakup test unit/feature (11 webhook, 6 realtime, inventory) |
+
+**Catatan penting (semua dari bug nyata saat pengembangan):**
+- **Serial `workers:1`** — `orders`/`cart`/`cancel-order` memanipulasi cart
+  user YANG SAMA (test@) → paralel = race (checkout menghabiskan cart spec lain).
+- **Jangan reset password `test@example.com`** di test — spec reset memakai
+  user e2e khusus (per-run), kalau tidak, spec auth run berikutnya gagal.
+- **State refund bersifat sekali-pakai** — `admin.spec` mengubah order paid
+  seed → `refunded`. Run ulang TANPA reseed = test refund gagal. Selalu
+  `migrate:fresh --seed` dulu.
+- `/forgot-password` itu **guest-only** — user masih login di-guard ke
+  beranda (ISSUES #5); spec reset logout dulu setelah register.
+- **`hasText: 'paid'` case-insensitive** — kena header kolom "Paid at";
+  incar tombol aksanya langsung, jangan filter baris by status teks.
+- Tombol konfirmasi Filament berlabel **"Confirm"**, bukan label aksi.
+
+---
+
 ## F. Checklist bug-hunt (dari PROGRESS)
 
 - [x] A1–A6 SPA alur utama — lulus (bugs: A3 slug binding, A4 clamp stok,

@@ -16,6 +16,7 @@ dist-ssr
 # Playwright
 test-results
 playwright-report
+playwright-auth.json
 
 # Editor directories and files
 .vscode/*

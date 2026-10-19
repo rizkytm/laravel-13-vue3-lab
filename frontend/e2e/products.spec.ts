@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test'
-import { login } from './helpers'
 
 // Regresi bug A3/A4: 404 slug binding, {data} unwrap (halaman kosong),
 // Opsi tampil JSON mentah.
+// Project `app`: session dari storageState (setup) — tanpa login() ulang.
 
 test('detail produk tampil dari klik kartu', async ({ page }) => {
-  await login(page)
+  await page.goto('/') // start dari beranda (session via storageState)
   await page.getByTestId('search').waitFor()
 
   const firstCard = page.getByTestId('product-card').first()
@@ -19,7 +19,7 @@ test('detail produk tampil dari klik kartu', async ({ page }) => {
 })
 
 test('search menyaring daftar produk', async ({ page }) => {
-  await login(page)
+  await page.goto('/')
   const cards = page.getByTestId('product-card')
   await expect(cards.first()).toBeVisible()
 

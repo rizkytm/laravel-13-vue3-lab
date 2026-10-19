@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -11,11 +12,14 @@ use App\Models\User;
 it('boots from seed data and serves main pages', function () {
     $this->seed();
 
-    // Order::factory punya user_id User::factory() → 5 user tambahan
-    // selain test@example.com (kontrak seeder: 12 product, 5 order)
-    expect(User::count())->toBeGreaterThanOrEqual(1)
+    // Order::factory punya user_id User::factory() → user tambahan selain
+    // test@example.com & admin@example.com (kontrak seeder: 12 product,
+    // 5 order pending + 1 order paid utk e2e refund, admin utk /admin)
+    expect(User::count())->toBeGreaterThanOrEqual(2)
         ->and(Product::count())->toBe(12)
-        ->and(Order::count())->toBe(5)
+        ->and(Order::count())->toBe(6)
+        ->and(Order::where('status', OrderStatus::Paid)->count())->toBe(1)
+        ->and(User::where('email', 'admin@example.com')->first()?->is_admin)->toBeTrue()
         ->and(OrderItem::count())->toBeGreaterThan(0); // 1-3 item per order
 
     $this->get('/login')->assertOk();

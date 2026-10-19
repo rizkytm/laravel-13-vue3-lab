@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test'
-import { login } from './helpers'
 
 // Alur beli penuh — mandiri (membuat ordennya sendiri lewat UI),
 // regresi: order detail (baru) + link invoice signed (D1).
+// Project `app`: sudah login via storageState (setup) — TANPA login() ulang
+// supaya hemat kuota rate limit login (5/menit).
 
 test('checkout → detail order → link invoice signed', async ({ page }) => {
-  await login(page)
-
-  // Beli produk pertama
+  // Beli produk pertama (start dari beranda — session via storageState)
+  await page.goto('/')
   await page.getByTestId('product-card').first().click()
   await page.getByTestId('add-to-cart').click()
   await page.goto('/cart')
