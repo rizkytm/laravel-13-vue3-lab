@@ -27,9 +27,12 @@ config/kode/test. Status: ✅ memenuhi · ⚠️ sebagian/belum terverifikasi ·
 
 ## Top gap prioritas menuju L2 (urut kerjakan)
 
-1. **Security headers nihil** (❌ 3.4.1, 3.4.3, 3.4.4, 3.4.5, 3.4.6): tidak ada
-   HSTS, CSP, `X-Content-Type-Options`, `Referrer-Policy`, frame-ancestors.
-   Fix: middleware header keamanan + test.
+1. ~~**Security headers nihil**~~ — **SELESAI (2026-10-19)**: middleware global
+   `AddSecurityHeaders` → HSTS, nosniff, Referrer-Policy, X-Frame-Options,
+   CSP (sebagian), + `Cache-Control: no-store` (butir 9 juga). Test:
+   `SecurityHeadersTest` (7) + e2e `security-headers.spec.ts` (3).
+   **Sisa:** CSP `script-src` penuh butuh nonce — Filament v4 belum dukung
+   nonce (lihat butir ❌ lain untuk alasan).
 2. **Cookie session tanpa `Secure` bawaan** (❌ 3.3.1): `SESSION_SECURE_COOKIE`
    tidak punya default `true` — di produksi tanpa env ini cookie dikirim via
    HTTP. Plus `__Host-` prefix belum dipakai (❌ 3.3.3).
@@ -46,8 +49,9 @@ config/kode/test. Status: ✅ memenuhi · ⚠️ sebagian/belum terverifikasi ·
 8. **Bearer token di `localStorage`** (⚠️ 14.3.3, ⚠️ 14.3.1): mode token
    menyimpan `lab_token` di localStorage (rawan XSS); `spaLogout` tidak
    membersihkan token mode Bearer.
-9. **Header anti-cache untuk data sensitif** (❌ 14.3.2): respons auth/order
-   tanpa `Cache-Control: no-store`.
+9. ~~**Header anti-cache untuk data sensitif**~~ — **SELESAI (2026-10-19)**:
+   `Cache-Control: no-store, private` di semua response dinamis (middleware
+   `AddSecurityHeaders`) — ASVS 14.3.2 ✅.
 10. **Dokumen keamanan formal** (❌ 13.3.1 secrets mgmt, ❌ 15.1.2 SBOM,
     ⚠️ 8.1.x/11.1.x/16.1.x): key policy, inventaris data sensitif, aturan
     otorisasi — ada di kode & DEBRIEF tapi belum jadi dokumen.
@@ -93,12 +97,12 @@ client).
 | 3.3.2 | ✅ | `same_site => lax` (config/session.php) |
 | 3.3.3 | ❌ | Prefix `__Host-` tidak dipakai |
 | 3.3.4 | ✅ | `http_only => true` |
-| 3.4.1 | ❌ | HSTS tidak ada |
-| 3.4.2 | ⚠️ | `config/cors.php` tidak dipublikasi → default framework (origins `*`) belum dipersempit |
-| 3.4.3 | ❌ | CSP tidak ada |
-| 3.4.4 | ❌ | `X-Content-Type-Options: nosniff` tidak ada |
-| 3.4.5 | ❌ | `Referrer-Policy` tidak ada |
-| 3.4.6 | ❌ | frame-ancestors / anti-clickjacking tidak ada |
+| 3.4.1 | ✅ | HSTS `max-age=31536000; includeSubDomains` — middleware `AddSecurityHeaders` |
+| 3.4.2 | ✅ | `config/cors.php` dipublikasi; `allowed_origins` ketat (dev Vite, env `CORS_ALLOWED_ORIGINS` utk produksi) — bukan `*` |
+| 3.4.3 | ⚠️ | CSP ada (`frame-ancestors` `object-src` `base-uri` `form-action`) tapi **tanpa `script-src`** — Filament v4 pakai inline script tanpa nonce; `script-src` ketat akan mematahkan `/admin` |
+| 3.4.4 | ✅ | `X-Content-Type-Options: nosniff` — middleware `AddSecurityHeaders` |
+| 3.4.5 | ✅ | `Referrer-Policy: strict-origin-when-cross-origin` |
+| 3.4.6 | ✅ | `frame-ancestors 'none'` + `X-Frame-Options: DENY` |
 | 3.7.2 | ✅ | Redirect SPA via `router.push` (path internal) + login `intended()` internal; tanpa open redirect ke host luar |
 
 ✅ lain: 3.2.2 (teks dirender aman, tanpa `v-html`), 3.5.1 (CSRF token + XSRF
@@ -240,7 +244,7 @@ tamper** — `EncryptedFieldTest`), 11.4.1, 11.4.2 (bcrypt KDF), 11.4.3
 | 14.1.1, 14.1.2 | ⚠️ | Data sensitif (phone) di-encrypted + tidak diekspos ke API; inventaris & level proteksi belum formal |
 | 14.2.4 | ⚠️ | Retensi data (order, log) belum didefinisikan |
 | 14.3.1 | ⚠️ | `spaLogout` membersihkan session tapi `lab_token` (mode Bearer) tidak dibersihkan |
-| 14.3.2 | ❌ | Tidak ada header `Cache-Control: no-store` untuk respons auth/order |
+| 14.3.2 | ✅ | `Cache-Control: no-store, private` semua response dinamis (middleware `AddSecurityHeaders`) |
 | 14.3.3 | ⚠️ | `lab_token` disimpan di localStorage — XSS bisa mencuri; pertimbangkan memory-only atau cookie HttpOnly |
 
 ## V15 — Secure Coding & Architecture

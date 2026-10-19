@@ -98,7 +98,11 @@ Tiap tahap = 1 commit + test, jangan dikerjakan sekaligus.
   - fitur password (reset/ubah) → P1 butir 1 + 6
   - rate limit checkout → urutan tahap 3
   - security headers (HSTS, CSP, nosniff, dll) → middleware, dikerjakan
-    saat fase hardening akhir
-  - cache-control → dikerjakan bersama security headers
+    saat fase hardening akhir → **SELESAI (2026-10-19)**: middleware global
+    `AddSecurityHeaders` (HSTS, nosniff, Referrer-Policy, X-Frame-Options,
+    CSP sebagian) + `config/cors.php` ketat. Sisa: CSP `script-src` penuh
+    butuh nonce (Filament v4 belum dukung).
+  - cache-control → dikerjakan bersama security headers → **SELESAI**:
+    `Cache-Control: no-store, private` semua response dinamis.
   Sisanya (cookie Secure, HTTPS, token storage, log auth, antivirus
   upload) tetap catatan hardening produksi, tidak memblokir selesai.

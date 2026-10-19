@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -17,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Hardening ASVS: security headers + no-store di SEMUA response
+        // (web, API, panel Filament) — append global = terakhir memproses
+        // response, jadi header ikut menempel di error/redirect juga.
+        $middleware->append(AddSecurityHeaders::class);
+
         // Append ke web group: jalan SESUDAH StartSession (butuh session
         // untuk persist pilihan locale), SEBELUM controller.
         $middleware->web(append: [

@@ -451,6 +451,40 @@ Mail = `log driver` — semua link verifikasi & reset muncul di log, bukan inbox
 
 ---
 
+## H. Hardening ASVS — security headers (fase hardening akhir)
+
+- **Kode:** `Http/Middleware/AddSecurityHeaders.php` (registrasi global di
+  `bootstrap/app.php`), `config/cors.php`, test `tests/Feature/SecurityHeadersTest.php`
+  + `frontend/e2e/security-headers.spec.ts`
+- **Langkah (curl -I, header kelihatan langsung):**
+  ```bash
+  curl -I http://localhost:8000/login
+  curl -I http://localhost:8000/api/v1/products        # 401 tapi header tetap ada
+  curl -I http://localhost:8000/admin                  # 200/redirect, CSP menempel
+  ```
+  Buka juga `http://localhost:8000/admin` di browser → panel Filament **tetap
+  normal** (CSP sengaja tanpa `script-src` — lihat catatan di bawah).
+- **Harapkan:**
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
+  - `Cache-Control: no-store, private` (semua response dinamis — ASVS 14.3.2)
+  - `Content-Security-Policy: frame-ancestors 'none'; object-src 'none';
+    base-uri 'self'; form-action 'self'`
+  - CORS: `curl -I -H 'Origin: https://evil.example' …/api/v1/products` →
+    **tanpa** `access-control-allow-origin`; pakai `http://localhost:5173` →
+    header ACAO ada (daftar origin ketat, bukan `*`).
+- **Catatan CSP (ASVS 3.4.3 ⚠️ partial):** `script-src` TIDAK dipasang —
+  Filament v4 memakai inline `<script>`/`<style>` **tanpa dukungan nonce**
+  (`vendor/filament/.../layout/base.blade.php`), jadi CSP script-src ketat
+  akan mematahkan `/admin`. Directive yang dipasang hanya yang tak menyentuh
+  eksekusi script. Full `script-src` = tunda sampai Filament dukung nonce.
+- **Uji otomatis:** `php artisan test --filter=SecurityHeadersTest` (7 test);
+  `cd frontend && npx playwright test e2e/security-headers.spec.ts` (3 test).
+
+---
+
 ## F. Checklist bug-hunt (dari PROGRESS)
 
 - [x] A1–A6 SPA alur utama — lulus (bugs: A3 slug binding, A4 clamp stok,

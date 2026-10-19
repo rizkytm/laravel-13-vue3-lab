@@ -38,9 +38,10 @@ Test dijalankan assistant; fungsi dicek via browser oleh Rizky. Milestone = 1 co
 | T6 — Filament admin (v4) | ✅ | `feat(payment+admin)` | +5 PHP: panel /admin hanya is_admin, resource Order (aksi via machine)/Product (stok read-only)/User (toggle admin) |
 | T7 — Stok realtime | ✅ | `feat(payment+admin)` | +6 Vitest: realtime.ts subscribe StockUpdated, graceful no-op tanpa broadcaster, cart.applyStockUpdate clamp qty |
 | T8 — Cancel order customer | ✅ | `feat(payment+admin)` | +6 PHP +2 Vitest: POST /orders/{id}/cancel + policy (pemilik+pending), tombol SPA, restock berjejak |
+| H — Hardening ASVS (headers + cache-control) | ✅ | `feat(security)` | +7 PHP +3 e2e: middleware global AddSecurityHeaders (HSTS, nosniff, Referrer-Policy, X-Frame-Options, CSP sebagian) + no-store + CORS ketat; CSP tanpa script-src (Filament tanpa nonce) |
 
-Test terakhir: **172 passed (PHP) + 68 passed (Vitest) + `vue-tsc --noEmit` bersih**.
-**Seluruh implementasi selesai (M1-M8 + F1-F4 + scope T1-T8)** — commit `feat(F4)` + `089f0e5`.
+Test terakhir: **182 passed (PHP) + 68 passed (Vitest) + `vue-tsc --noEmit` bersih**.
+**Seluruh implementasi selesai (M1-M8 + F1-F4 + scope T1-T8 + hardening H)** — commit `feat(F4)` + `089f0e5` + `feat(security)`.
 Scope e-commerce production grade (SCOPE.md) lulus penuh; deviasi tercatat di SCOPE.md.
 Selanjutnya: kerjakan item di "Pertanyaan tertunda" (jawaban + reminder).
 
